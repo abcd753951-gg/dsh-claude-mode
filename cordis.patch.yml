@@ -1,0 +1,13 @@
+# dsh-claude-mode bundle layer.
+#
+# One Host row (index.js is a no-op Host half; all behavior lives in the
+# browser Client half registered from package.json `dsh.client`). The Client
+# half registers a reversible token theme layer, the run/status bar above the
+# composer, a command palette overlay, a per-turn completion footer, a
+# Conversation header button, and a Settings section — all through public
+# slots and services. It never edits @deepseek-ai files and never touches the
+# running app bundle.
+- insert:
+    - id: dsh-claude-mode
+      name: dsh-claude-mode
+      config: {}

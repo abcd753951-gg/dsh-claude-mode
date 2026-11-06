@@ -1,0 +1,24 @@
+dsh-claude-mode
+Copyright (c) 2026 dsh-claude-mode contributors
+
+This package is an independent implementation of a Claude Code-inspired
+interaction layer for DeepSeek Harness. It is not produced, endorsed, or
+sponsored by Anthropic.
+
+"Claude" and "Claude Code" are trademarks of Anthropic, PBC. They are used here
+only in a descriptive sense to name the interaction style the plugin emulates.
+
+The palette, status-star frames, verb pool, completion words, icons, and
+interaction code are this project's own implementation. No third-party source
+code, bytecode, artwork, logo, font, or screenshot is contained in this package.
+
+The status glyph is the standard Unicode character U+273B (TEARDROP-SPOKED
+ASTERISK), rendered as text. No Anthropic logo or icon asset is included.
+
+The plugin is built exclusively from DeepSeek Harness public extension points
+(Cordis slots and services). It does not embed, patch, or redistribute files
+from the Harness or from any other plugin.
+
+Third-party runtime dependencies: none beyond the host-provided React runtime.
+
+License: MIT (see LICENSE).

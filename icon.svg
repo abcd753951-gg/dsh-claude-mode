@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Claude mode">
+  <defs>
+    <linearGradient id="ccm-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e08a6d"/>
+      <stop offset="1" stop-color="#a4563c"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#ccm-bg)"/>
+  <path d="M32 11c1.7 11.6 4 16.2 7.4 19.6C42.8 34 47.4 36.3 59 38c-11.6 1.7-16.2 4-19.6 7.4C36 48.8 33.7 53.4 32 65c-1.7-11.6-4-16.2-7.4-19.6C21.2 42 16.6 39.7 5 38c11.6-1.7 16.2-4 19.6-7.4C28 27.2 30.3 22.6 32 11Z" fill="#fffaf4" opacity="0.96" transform="translate(0 -6) scale(0.92) translate(2.8 4.4)"/>
+  <path d="M20 50.5 25.5 56 20 61.5" fill="none" stroke="#fffaf4" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <path d="M30 61h12" stroke="#fffaf4" stroke-width="3.2" stroke-linecap="round" opacity="0.9"/>
+</svg>
