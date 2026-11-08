@@ -2,7 +2,9 @@
 
 A pure-slot Claude Code-style interaction layer for DeepSeek Harness: a neutral-grey + terracotta theme pair, a pulsing status star, a command palette, rotating turn-completion footers, and keyboard-first flows. No host files are edited and the app root is never replaced; disabling or uninstalling restores the previous theme and removes every widget.
 
-0.5.0 adds four interactions: chat-history search inside the palette, read-aloud for assistant replies, a turn-completion chime, and `Alt+N` for a new session. See [the design notes](docs/DESIGN.md).
+1.0.0 upgrades the Prompt Pilot from a short-ghost hint into **complete prompt collaboration**: with an empty composer it first writes a local draft with goal, known context, scope, constraints, execution and acceptance checks, and displays the whole draft in a multi-line card; with AI completion enabled it sends the same bounded context to the current model to rewrite a fuller, more executable next prompt. One call per context, cached on both client and Host; with AI off or the model unavailable, the complete local draft remains. A typed prefix still completes as ghost text. Both accept with `Tab` and dismiss with `Esc`. See [the design notes](docs/DESIGN.md).
+
+**Prompt Pilot evaluation**: `npm run eval:pilot` runs 30 Chinese/English context cases plus length/goal-and-acceptance/re-offer/context-budget/latency checks, and a fake `llm` harness for the Host AI route (auth, 32KB body limit, context clipping, 650-token output budget, cache, rate limit, failure fallback). Currently **30/30 local cases + 18/18 route contracts** pass; local generation is ~0.01ms per call. The AI path makes at most one model call per context; local generation uses 0 tokens and 0 network. Full report: [docs/PROMPT-PILOT-EVAL.md](docs/PROMPT-PILOT-EVAL.md).
 
 > Independent implementation built only on DeepSeek Harness public slots and services. It bundles no third-party source code, trademark, icon, or artwork; the palette and interactions are this plugin's own presentation layer and it is not affiliated with Anthropic. See [NOTICE](NOTICE).
 
@@ -15,6 +17,7 @@ A pure-slot Claude Code-style interaction layer for DeepSeek Harness: a neutral-
 | Dual theme | `theme.overrideTokens` token layer | Two ~200-token `--dsw-*` packs (neutral charcoal / neutral light). Brand `#d77757`, user bubble `#373737/#f0f0f0`, composer `#262626/#f5f5f5`, selection `#264f78/#b4d5ff`, state and diff colors come from the plugin's unified design tokens. Token-only override; no host CSS is touched. |
 | Run status bar | `conversation.input.dock` | Idle hints (`↵ send · ⇧↵ newline · ↑ history · / commands · @ files · ⌃K palette · ? shortcuts`); while running: `✻ <verb>… (esc to interrupt · 12s · running tool for 3s)` — a six-frame Unicode star pulsing forward and back over two seconds (100 ms refresh), plus live tool duration from the Chat snapshot. |
 | Prompt history | run-bar keydown + command palette | With an empty composer, `↑` recalls previous prompts and `↓` moves newer / restores the saved draft (finalized user/steering nodes from the Chat snapshot, deduped, newest first). The `⌃K` palette adds a "Prompt history" group (12 most recent, fuzzy-searchable, selecting fills the composer). |
+| Inline prompt completion | `conversation.input.overlay` | **Prompt Pilot**: with an empty composer, reads the newest assistant reply, recent tool output, last prompt and Session title, then writes a **complete local draft** (goal, known context, scope, constraints, execution, acceptance/verification) and shows it in a multi-line card. With **AI prompt completion** on, the same bounded context goes to the current model for a fuller, more executable next prompt; one request per context with client and Host caching, and the complete local draft remains when AI is off or unavailable. Shows after a 350 ms focus dwell; `Tab` accepts, `Esc` dismisses, **deleting an accepted draft re-offers it**. A ≥2 character prefix still completes from history. `/`, `@`, a running turn, or a host menu suppress it. |
 | Shortcut sheet | `shell.overlay` | With an empty composer, `?` (or the palette action) opens a sheet grouped into Input / Navigation / Interface; `Esc` or the backdrop closes it. Matches Claude Code's `? for shortcuts`, which only triggers on empty input. The sheet now lists `Alt+N` too. |
 | Chat-history search | `sessions.search` + palette | Typing at least two characters in `⌃K` debounces a call into the host's full-text session index; hits appear under "Chats" with a snippet and `↵` opens that session. `Alt`/closing aborts the request and a 12-second timeout clears the loading state. The host's `session-query-sqlite` defaults to `openAt: never`, so this group only returns rows when the deployment enables the index; otherwise it silently disappears. |
 | Read-aloud | `conversation.chat.assistant-actions` | Every finalized assistant message gets a speaker button in its action strip. It reads the message prose with the Web Speech API and toggles to Stop; Chinese/English follows the UI locale and long replies are chunked into ≤1200-character utterances. Browsers without speech synthesis omit the button. |
@@ -25,7 +28,7 @@ A pure-slot Claude Code-style interaction layer for DeepSeek Harness: a neutral-
 | Command palette | `shell.overlay` | `Ctrl+K` / `⌘K`: fuzzy search, grouped sections (appearance / interaction / session / chats / history), ↑↓·Tab/Enter/Esc, hover and click, backdrop close. Actions: mode toggle, three theme choices, status-bar/footer/motion/sound toggles, sidebar toggle, plugin-icon manager, shortcut sheet, interrupt, new session; two or more characters also search chat history. |
 | Turn footer | `conversation.chat.turnTail` | `✻ Baked for 1m 2s · 3 steps`; the completion word rotates per turn through `Baked / Brewed / Churned / Cogitated / Cooked / Crunched / Sautéed / Worked` (or `烘焙/酿造/搅拌/推敲/烹饪/咀嚼/煸炒/打磨` in zh). Registers against both the modern list slot and the older chain slot. |
 | Header button | `conversation.session.header.utilities` | Top-right `✻` opens the palette; accented while running. |
-| Settings page | `settings.section` + `settings.section.icon` | Master switch, theme segment, widget/motion/sound toggles, sound preview, shortcut reference, reset, about/version. |
+| Settings page | `settings.section` + `settings.section.icon` | Master switch, theme segment, widget/motion/sound toggles, inline completion, empty-composer context suggestions, AI prompt completion, sound preview, shortcut reference, reset, about/version. The AI switch explains that one call per context is cached and that turning it off leaves the local template only. |
 | Motion | component CSS/JS | Frame-by-frame star pulse, panel entrance, control transitions; respects `prefers-reduced-motion` and the plugin motion toggle (static `✻` when off). |
 
 ![Dark palette](docs/preview/dark-palette.png)
@@ -38,7 +41,7 @@ Ask the agent to install the local directory bundle:
 plugin_manager install_bundle, target = <absolute path to this checkout>
 ```
 
-The bundle is written into the current profile (default `desktop`). Reload the Web GUI (or the desktop window) to see it; uninstalling removes the theme layer and every widget.
+The bundle is written into the current profile (default `desktop`). Reload the Web GUI (or the desktop window) to see it; when upgrading from an older version, the Host half now owns the AI route, so fully restart the DSH desktop app (or the `dsh web` server) before refreshing the page. Uninstalling removes the theme layer and every widget.
 
 The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.client` are declared.
 
@@ -46,6 +49,10 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 
 - `Ctrl+K` / `⌘K`: command palette; type two or more characters to search chat history.
 - `Alt+N`: open a blank session.
+- With an empty composer, a complete local prompt card appears first; with AI completion on, it upgrades from "AI is completing…" to a fuller prompt written by the current model. Press `Tab` to accept, `Esc` to dismiss; blur or typing also dismisses. Delete an accepted draft and it appears again from cache without another model call.
+- With a typed prefix, press `Tab` to accept the light inline completion.
+- Local drafting, context extraction and acceptance ranking run in the browser. Only when AI completion is enabled and the cache misses is the latest reply, recent prompts and Session title sent to the current model. Statistics store only suggestion kinds/counts, never prompt text.
+- Assistant read-aloud, completion sound, history recall and the command palette are unchanged.
 - The speaker in an assistant action strip reads that reply aloud; click again to stop.
 - Top-right `✻`: command palette.
 - `esc to interrupt` in the run bar: cancel the running turn, keeping finished tool results and queued messages.
@@ -68,6 +75,16 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 
 ![Prompt-history group](docs/preview/palette-history.png)
 
+![Complete prompt card](docs/preview/ai-panel.png)
+
+![Dark complete prompt card](docs/preview/ai-panel-dark.png)
+
+![Mobile complete prompt card](docs/preview/ai-panel-mobile.png)
+
+![AI prompt completion settings](docs/preview/ai-settings.png)
+
+![Accepted complete prompt](docs/preview/ai-accepted.png)
+
 ## Design rules
 
 1. **Public extension points only**: the `theme` token layer; `conversation.input.dock`, `conversation.chat.turnTail`, `conversation.chat.assistant-actions`, `conversation.session.header.utilities`, `shell.overlay`, `sidebar.panellist.actions`, `settings.section` (+ icon); the `sessions.search` and `uiWorkspace` services; and the `locale` service. No occupied keyed slot is replaced.
@@ -79,6 +96,9 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 ## Known edges
 
 - The conversation view is not replaced: thinking blocks, tool cards, diffs, and approvals remain host-rendered (which also keeps uninstall and host upgrades safe).
+- AI prompt completion needs the Host `llm` service and a usable default model. It sends the latest reply, recent prompts, tool output and Session title to the configured model provider. One call per context (client and Host caches for 10 minutes, 60-second failure cooldown); with the switch off, no model call is made and the complete local template remains. A new context counts as a new call.
+- The complete card is fixed above/below the composer, wraps at 15px and scrolls inside a capped card; clicking it does not move focus out of the editor, and `Tab`/`Esc` only take over while it is visible.
+- Upgrading from 0.9.x needs a full DSH restart (or `dsh web` restart) because the Host half now owns the AI route.
 - An approval/question card can temporarily occupy the composer area, hiding the run bar; the card itself offers allow/deny/stop.
 - The `?` gesture only triggers on a focused, empty composer; with text present it stays a normal question mark. `Ctrl+R` (reload) and `Ctrl+S` (save) are not hijacked — prompt search lives inside the `⌃K` palette.
 - The sidebar toggle needs the host `layout` service; without it the run-bar `«` button hides and the palette action degrades to a no-op.
@@ -95,7 +115,8 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 ```bash
 npm run build:client   # generate client.js from src/client/*.js
 npm run check          # syntax + bundle freshness
-npm test               # 31 unit tests (tokens, i18n, store, ranking, word pools, frames, activity, history recall, chat-search mapping, read-aloud text/chunking, shortcut sheet, panel-icon manager, renders)
+npm test               # 42 unit tests (tokens, i18n, store, ranking, word pools, frames, activity, history recall, chat-search mapping, read-aloud text/chunking, context extraction, complete drafts/diagnostic fallbacks, inline completion, shortcut sheet, panel-icon manager, settings page, renders)
+npm run eval:pilot     # 30 local complete-draft cases + 18 Host AI route contracts + latency/context-budget/network audit, writes docs/PROMPT-PILOT-EVAL.md; no real model
 node --check index.js && node --check client.js
 ```
 
@@ -107,3 +128,11 @@ node --check index.js && node --check client.js
 ## License
 
 MIT. The interaction and visual layer are an independent implementation; "Claude" is used descriptively. See [NOTICE](NOTICE) and [the design notes](docs/DESIGN.md).
+
+
+
+
+
+
+
+

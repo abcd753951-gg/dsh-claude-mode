@@ -19,30 +19,43 @@ import {
   SPINNER_VERBS_EN,
   SPINNER_VERBS_ZH,
   completionWordFor,
+  buildPromptDraft,
   collectPromptHistory,
   createSettingsStore,
   dictionaryFor,
+  extractNextStep,
   format,
   formatDuration,
   formatElapsed,
   hash32,
   isChineseLocale,
+  latestToolResultText,
   loadPreviousTheme,
+  latestAssistantText,
   mapSessionSearchResults,
+  mapPinnedSessions,
+  normalizePilotStats,
   normalizeSettings,
   pickSpinnerVerb,
+  pilotBoost,
+  promptContextFromChat,
+  recordPilotEvent,
   runtime,
   savePreviousTheme,
+  suggestionSuppressed,
   assistantTextForMessage,
   spinnerFrame,
   spinnerFrameIndex,
   splitSpeechText,
   stepPromptHistory,
+  suggestPromptCompletion,
+  suggestNextPrompt,
   wordPoolsFor,
 } from '../../src/client/02-state.js'
 import {
   createPanelMenu,
   createRunBar,
+  createSettingsSection,
   createTurnFooter,
   fuzzyScore,
   groupItems,
@@ -126,9 +139,10 @@ test('normalizeSettings clamps unknown values onto defaults', () => {
   assert.deepEqual(normalizeSettings(undefined), DEFAULT_SETTINGS)
   assert.deepEqual(normalizeSettings({}), DEFAULT_SETTINGS)
   assert.deepEqual(
-    normalizeSettings({ enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true }),
-    { enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true },
+    normalizeSettings({ enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false }),
+    { enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false },
   )
+  assert.equal(normalizeSettings(undefined).aiPrompt, true)
   const coerced = normalizeSettings({ theme: 'neon', enabled: 1, animation: 0 })
   assert.equal(coerced.theme, 'auto')
   assert.equal(coerced.enabled, true)
@@ -319,6 +333,177 @@ test('stepPromptHistory walks older/newer and restores the draft', () => {
   assert.equal(started.state.draft, 'my draft')
 })
 
+test('suggestPromptCompletion prefers history, then starter prompts', () => {
+  const history = ['请审查当前仓库的性能瓶颈', 'Review the pull request diff']
+  const zh = suggestPromptCompletion('请审', history, 'zh-CN')
+  assert.equal(zh.full, '请审查当前仓库的性能瓶颈')
+  assert.equal(zh.tail, '查当前仓库的性能瓶颈')
+  const builtin = suggestPromptCompletion('请把', history, 'zh-CN')
+  assert.equal(builtin.full, '请把这段需求拆成可执行的开发计划，并标注风险')
+  const en = suggestPromptCompletion('Add', [], 'en')
+  assert.equal(en.full, 'Add unit tests for this feature, including edge cases')
+  assert.equal(suggestPromptCompletion('R', [], 'en'), null)
+  assert.equal(suggestPromptCompletion('/help', [], 'zh-CN'), null)
+  assert.equal(suggestPromptCompletion('line\nbreak', [], 'zh-CN'), null)
+  assert.equal(suggestPromptCompletion('完全不匹配', [], 'zh-CN'), null)
+})
+
+test('latestAssistantText reads finalized assistant blocks and fallbacks', () => {
+  const direct = {
+    legacy: {
+      nodes: [
+        { kind: 'assistant', blocks: [{ kind: 'reasoning', text: 'thinking' }, { kind: 'text', text: '最终结论' }] },
+      ],
+    },
+  }
+  assert.equal(latestAssistantText(direct), '最终结论')
+  const tail = {
+    legacy: {
+      nodes: [
+        { kind: 'turn-tail', data: { closing: { blocks: [{ kind: 'text', text: '旧回合' }] } } },
+        { kind: 'assistant', blocks: [{ kind: 'text', text: '新回复' }] },
+      ],
+    },
+  }
+  assert.equal(latestAssistantText(tail), '新回复')
+  assert.equal(latestAssistantText({} ), '')
+  assert.equal(latestAssistantText(undefined), '')
+})
+
+test('suggestNextPrompt is a full-draft alias, not a short-ghost engine', () => {
+  const next = suggestNextPrompt({ assistantText: '测试通过。下一步：补齐发布文档。', locale: 'zh-CN' })
+  assert.equal(next.kind, 'next-step')
+  assert.ok(next.full.length > 60)
+  assert.match(next.full, /补齐发布文档/)
+  const errorDraft = suggestNextPrompt({ assistantText: '运行时报错：TypeError', locale: 'zh-CN' })
+  assert.equal(errorDraft.kind, 'error')
+  assert.ok(errorDraft.full.length > 40)
+  assert.equal(suggestNextPrompt({ running: true, assistantText: '下一步：做点什么', locale: 'zh-CN' }), null)
+})
+
+test('buildPromptDraft writes a full prompt instead of a short ghost', () => {
+  const next = buildPromptDraft({
+    assistantText: '测试通过。下一步：补齐发布文档。',
+    locale: 'zh-CN',
+  })
+  assert.equal(next.kind, 'next-step')
+  assert.ok(next.full.length > 60)
+  assert.match(next.full, /补齐发布文档/)
+  assert.match(next.full, /验收/)
+  assert.match(next.full, /风险/)
+  assert.notEqual(next.full, '补齐发布文档')
+
+  const question = buildPromptDraft({ assistantText: '你希望我先改前端还是后端？', locale: 'zh-CN' })
+  assert.equal(question.kind, 'question')
+  assert.ok(question.full.length > 50)
+  assert.match(question.full, /推荐|理由/)
+
+  const completed = buildPromptDraft({ assistantText: '已完成修复，测试全部通过。', locale: 'zh-CN' })
+  assert.equal(completed.kind, 'completed')
+  assert.match(completed.full, /验证|测试/)
+  assert.match(completed.full, /提交/)
+
+  const blank = buildPromptDraft({ locale: 'zh-CN', sessionId: 'blank' })
+  assert.equal(blank.kind, 'starter')
+  assert.ok(blank.full.length > 50)
+  assert.match(blank.full, /目标|约束|风险/)
+
+  const en = buildPromptDraft({ assistantText: 'Next step: run the failing test', locale: 'en' })
+  assert.equal(en.kind, 'next-step')
+  assert.ok(en.full.split(/\s+/).length > 10)
+  assert.match(en.full, /acceptance|verification/i)
+
+  const error = buildPromptDraft({ assistantText: '运行时报错：TypeError: x is undefined', locale: 'zh-CN' })
+  assert.equal(error.kind, 'error')
+  assert.ok(error.full.length > 40)
+  assert.match(error.full, /复现|根因/)
+  assert.equal(buildPromptDraft({ running: true, assistantText: '下一步：做点什么', locale: 'zh-CN' }), null)
+})
+
+test('every settled context gets a complete draft, including errors and generic replies', () => {
+  const contexts = [
+    {},
+    { sessionTitle: '重构任务' },
+    { lastUserPrompt: '继续实现这个模块' },
+    { assistantText: '这是一个普通回答，没有显式下一步。' },
+    { assistantText: '运行时报错：TypeError: x is undefined' },
+    { toolText: 'Error: cannot read property foo', toolFresh: true },
+    { assistantText: '```\n下一步：不要执行这段\n```\n回答结束。' },
+    { assistantText: '已完成修复，测试通过。' },
+  ]
+  for (const input of contexts) {
+    const draft = buildPromptDraft(Object.assign({ locale: 'zh-CN' }, input))
+    assert.ok(draft, 'missing draft for ' + JSON.stringify(input))
+    assert.ok(draft.full.length >= 40)
+    assert.ok(draft.contextual)
+  }
+  assert.equal(buildPromptDraft({ running: true, locale: 'zh-CN' }), null)
+})
+
+
+test('extractNextStep prefers an explicit labeled step and trims the sentence', () => {
+  const text = '已完成\n\n下一步：把这两条不够稳定的实时断言改成可跳过；PCR 再换供应商。\n\n— footer'
+  assert.equal(extractNextStep(text, true), '把这两条不够稳定的实时断言改成可跳过')
+  assert.equal(extractNextStep('- **下一步：** 补上边界测试', true), '补上边界测试')
+  assert.equal(extractNextStep('Next step: run the failing test', false), 'run the failing test')
+  assert.equal(extractNextStep('没有明确的下一步。', true), '')
+})
+
+test('extractNextStep handles bold, list, heading, English and last-wins', () => {
+  assert.equal(extractNextStep('**下一步：** 补齐发布文档', true), '补齐发布文档')
+  assert.equal(extractNextStep('- 下一步：跑一遍端到端测试', true), '跑一遍端到端测试')
+  assert.equal(extractNextStep('### 下一步\n- 把 README 的安装步骤补全', true), '把 README 的安装步骤补全')
+  assert.equal(extractNextStep('Next step:\n- update the changelog', false), 'update the changelog')
+  assert.equal(extractNextStep('下一步：旧的计划\n补充说明\n下一步：新的动作', true), '新的动作')
+})
+
+test('prompt pilot counts stay bounded and suppression is time-scoped', () => {
+  let stats = normalizePilotStats(null)
+  stats = recordPilotEvent(stats, 'next-step', 'shown', 1000, 'k1')
+  stats = recordPilotEvent(stats, 'next-step', 'shown', 1001, 'k1')
+  stats = recordPilotEvent(stats, 'next-step', 'shown', 1001, 'k1')
+  stats = recordPilotEvent(stats, 'next-step', 'accepted', 1002, 'k1')
+  assert.equal(stats.kinds['next-step'].shown, 3)
+  assert.equal(stats.kinds['next-step'].accepted, 1)
+  assert.ok(pilotBoost(stats, 'next-step') > 0)
+  // Acceptance is not a dismissal: deleting the accepted draft must re-offer it.
+  assert.equal(suggestionSuppressed(stats, 'k1', 1003), false)
+  stats = recordPilotEvent(stats, 'next-step', 'dismissed', 1003, 'k2')
+  assert.equal(suggestionSuppressed(stats, 'k2', 1004), true)
+  assert.equal(suggestionSuppressed(stats, 'k2', 70000), false)
+  const normalized = normalizePilotStats({ kinds: { x: { shown: -2, accepted: '3', dismissed: 99999999 } } })
+  assert.deepEqual(normalized.kinds.x, { shown: 0, accepted: 3, dismissed: 1000000 })
+})
+
+test('promptContextFromChat reads assistant text, tool output and prompts', () => {
+  const snapshot = {
+    legacy: {
+      nodes: [
+        { kind: 'user', content: [{ type: 'text', text: '请跑测试' }] },
+        { kind: 'tool-result', data: { content: [{ type: 'text', text: 'Error: boom' }] } },
+        { kind: 'assistant', blocks: [{ kind: 'text', text: '测试失败了' }] },
+      ],
+    },
+  }
+  const context = promptContextFromChat(snapshot)
+  assert.equal(context.assistantText, '测试失败了')
+  assert.equal(context.toolText, 'Error: boom')
+  assert.equal(context.lastUserPrompt, '请跑测试')
+  assert.equal(context.assistantFresh, true)
+  assert.equal(context.toolFresh, true)
+  assert.deepEqual(context.history, ['请跑测试'])
+  assert.equal(latestToolResultText(snapshot), 'Error: boom')
+  const stale = promptContextFromChat({
+    legacy: {
+      nodes: [
+        { kind: 'assistant', blocks: [{ kind: 'text', text: '旧回复' }] },
+        { kind: 'user', content: [{ type: 'text', text: '新问题' }] },
+      ],
+    },
+  })
+  assert.equal(stale.assistantFresh, false)
+})
+
 test('shortcut sheet groups cover input, navigation and interface rows', () => {
   const dict = DICTIONARIES.zh
   const t = (key) => (dict[key] === undefined ? key : dict[key])
@@ -352,6 +537,27 @@ test('chat search keeps one row per Session and flattens snippets', () => {
   const long = mapSessionSearchResults([{ sessionId: 's4', snippet: 'x'.repeat(200) }])
   assert.ok(long[0].snippet.endsWith('…'))
   assert.ok(long[0].snippet.length <= 96)
+})
+
+test('pinned sessions resolve titles and owning workspaces', () => {
+  const rows = mapPinnedSessions({
+    pinnedSessionIds: ['s1', 's2', 'missing'],
+    items: [
+      { title: 'Alpha', sessionIds: ['s1'] },
+      { title: 'Beta', sessionIds: ['s2'] },
+    ],
+  }, {
+    byId: {
+      s1: { projectionValues: { title: '第一项\n置顶' } },
+      s2: { title: 'Second pinned' },
+    },
+  })
+  assert.deepEqual(rows.map((row) => [row.sessionId, row.title, row.workspaceTitle]), [
+    ['s1', '第一项 置顶', 'Alpha'],
+    ['s2', 'Second pinned', 'Beta'],
+  ])
+  assert.deepEqual(mapPinnedSessions(undefined, undefined), [])
+  assert.deepEqual(mapPinnedSessions({ pinnedSessionIds: ['s1'], items: [] }, { byId: {} }), [])
 })
 
 test('assistantTextForMessage finds the closing turn-tail blocks', () => {
@@ -584,6 +790,20 @@ test('panel menu folds individual icons and provides bulk collapse/expand', () =
   })
 })
 
+test('settings section exposes both prompt-pilot switches and version', () => {
+  withReactStub(() => {
+    const store = createSettingsStore(DEFAULT_SETTINGS)
+    const Section = createSettingsSection({}, store, translateFor('zh'))
+    const tree = Section({})
+    const text = textOf(tree)
+    assert.match(text, /输入提示补全/)
+    assert.match(text, /空输入框上下文推荐/)
+    assert.match(text, /AI 完善提示词/)
+    assert.match(text, /同一上下文只调用一次/)
+    assert.match(text, /1\.0\.0/)
+  })
+})
+
 test('turn footer stamps a rotating completion word and duration', () => {
   withReactStub(() => {
     const base = 1700000000000
@@ -610,3 +830,4 @@ test('turn footer stamps a rotating completion word and duration', () => {
     }), null)
   })
 })
+

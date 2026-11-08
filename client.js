@@ -617,6 +617,7 @@ const DICTIONARIES = {
     'palette.footer.run': '↵ 执行',
     'palette.footer.close': 'Esc 关闭',
     'palette.section.appearance': '外观',
+    'palette.section.pinned': '置顶会话',
     'palette.section.behavior': '交互',
     'palette.section.session': '会话',
     'palette.section.search': '聊天记录',
@@ -646,6 +647,12 @@ const DICTIONARIES = {
     'action.sound.on': '关闭完成提示音',
     'action.sound.off': '开启完成提示音',
     'action.sound.detail': '回合结束且窗口未聚焦时也容易听见的两声轻提示',
+    'action.ghost.on': '关闭输入提示补全',
+    'action.ghost.off': '开启输入提示补全',
+    'action.ghost.detail': '空输入框按当前对话推荐下一句，输入前缀时补全尾文；按 Tab 接受',
+    'action.ghostContext.on': '关闭空输入框上下文推荐',
+    'action.ghostContext.off': '开启空输入框上下文推荐',
+    'action.ghostContext.detail': '为空输入框按最近回复和当前会话上下文推荐下一句',
     'action.readAloud': '朗读这条回复',
     'action.stopReading': '停止朗读',
     'action.interrupt.label': '中断当前运行',
@@ -658,6 +665,8 @@ const DICTIONARIES = {
     'action.sidebar.detail': '收起或展开工作区 / 会话栏（Alt+B）',
     'action.panelmenu.label': '管理左侧插件图标',
     'action.panelmenu.detail': '收起多余图标，把侧边栏空间还给工作区',
+    'action.pinned.label': '置顶会话',
+    'action.pinned.detail': '在命令面板顶部快速打开置顶会话',
     'action.shortcuts.label': '查看键盘快捷键',
     'action.shortcuts.detail': '在输入框内按 ? 也可打开',
     'palette.noSession': '没有可中断的运行',
@@ -683,6 +692,8 @@ const DICTIONARIES = {
     'shortcuts.send': '发送消息',
     'shortcuts.newline': '换行',
     'shortcuts.history': '历史提示词（↑ 更早 / ↓ 更新）',
+    'shortcuts.ghost': '接受浅色输入补全',
+    'shortcuts.ghostDismiss': '收起输入建议',
     'shortcuts.palette': '打开命令面板',
     'shortcuts.help': '打开快捷键一览',
     'shortcuts.sidebar': '切换左侧边栏',
@@ -723,6 +734,19 @@ const DICTIONARIES = {
     'settings.sound.title': '完成提示音',
     'settings.sound.hint': '回合完成时播放两声轻提示音；可在下面试听，默认关闭。',
     'settings.sound.preview': '试听',
+    'settings.ghost.title': '输入提示补全',
+    'settings.ghost.hint': '输入框为空时显示完整提示词建议；输入前缀时在光标后补全尾文。按 Tab 接受，Esc 收起，继续输入或失焦会自动收起。',
+    'settings.ghostContext.title': '空输入框上下文推荐',
+    'settings.ghostContext.hint': '只在输入框为空时生效：读取最新回复、最近提示词与会话标题。开启 AI 完善时交给当前模型生成完整提示词；关闭后只用本地模板。关闭本项后只保留前缀补全。',
+    'settings.aiPrompt.title': 'AI 完善提示词',
+    'settings.aiPrompt.hint': '把最近回复、最近提示词与会话标题交给当前模型，生成一条目标、范围、约束和验收方式更完整的下一步提示词。同一上下文只调用一次并复用缓存；关闭后不发起模型调用。',
+    'ghost.ai.pending': 'AI 正在完善提示词…',
+    'ghost.ai.ready': 'AI 提示词建议',
+    'ghost.local.ready': '提示词建议',
+    'ghost.ai.fallback': '提示词建议（本地）',
+    'ghost.ai.hint': 'AI 只为这个上下文调用一次',
+    'ghost.local.hint': '本地生成，不发起模型调用',
+    'ghost.footer': 'Tab 接受 · Esc 收起',
     'settings.shortcut.title': '快捷键',
     'settings.shortcut.hint': '在输入框内也可用；宿主若占用同名快捷键，以宿主为准。',
     'settings.shortcut.palette': '命令面板',
@@ -754,6 +778,7 @@ const DICTIONARIES = {
     'palette.footer.run': '↵ run',
     'palette.footer.close': 'Esc close',
     'palette.section.appearance': 'Appearance',
+    'palette.section.pinned': 'Pinned chats',
     'palette.section.behavior': 'Interaction',
     'palette.section.session': 'Session',
     'palette.section.search': 'Chats',
@@ -783,6 +808,12 @@ const DICTIONARIES = {
     'action.sound.on': 'Turn off the completion sound',
     'action.sound.off': 'Turn on the completion sound',
     'action.sound.detail': 'Two soft notes when a turn finishes, audible even when the window is unfocused',
+    'action.ghost.on': 'Turn off inline prompt completion',
+    'action.ghost.off': 'Turn on inline prompt completion',
+    'action.ghost.detail': 'Suggest the next prompt from context when the composer is empty, or complete a typed prefix; press Tab to accept',
+    'action.ghostContext.on': 'Turn off empty-composer context suggestions',
+    'action.ghostContext.off': 'Turn on empty-composer context suggestions',
+    'action.ghostContext.detail': 'Suggest the next prompt from the latest reply and Session context when the composer is empty',
     'action.readAloud': 'Read this reply aloud',
     'action.stopReading': 'Stop reading',
     'action.interrupt.label': 'Interrupt the running turn',
@@ -795,6 +826,8 @@ const DICTIONARIES = {
     'action.sidebar.detail': 'Collapse or expand the workspace / session column (Alt+B)',
     'action.panelmenu.label': 'Manage sidebar plugin icons',
     'action.panelmenu.detail': 'Fold extra icons so the sidebar keeps room for workspaces',
+    'action.pinned.label': 'Pinned chats',
+    'action.pinned.detail': 'Open pinned chats from the top of the command palette',
     'action.shortcuts.label': 'Show keyboard shortcuts',
     'action.shortcuts.detail': 'Press ? in an empty composer too',
     'palette.noSession': 'Nothing is running',
@@ -820,6 +853,8 @@ const DICTIONARIES = {
     'shortcuts.send': 'Send the message',
     'shortcuts.newline': 'Insert a newline',
     'shortcuts.history': 'Prompt history (↑ older / ↓ newer)',
+    'shortcuts.ghost': 'Accept the light inline completion',
+    'shortcuts.ghostDismiss': 'Dismiss the inline suggestion',
     'shortcuts.palette': 'Open the command palette',
     'shortcuts.help': 'Open this shortcut sheet',
     'shortcuts.sidebar': 'Toggle the left sidebar',
@@ -860,6 +895,19 @@ const DICTIONARIES = {
     'settings.sound.title': 'Completion sound',
     'settings.sound.hint': 'Two soft notes when a turn finishes; preview it below. Off by default.',
     'settings.sound.preview': 'Preview',
+    'settings.ghost.title': 'Inline prompt completion',
+    'settings.ghost.hint': 'With an empty composer, show a complete prompt suggestion; with a typed prefix, complete the rest. Press Tab to accept, Esc to dismiss, or keep typing / blur to dismiss.',
+    'settings.ghostContext.title': 'Empty-composer context suggestions',
+    'settings.ghostContext.hint': 'Only applies while the composer is empty: reads the latest reply, recent prompts, and Session title. With AI completion on, the current model writes a full prompt; otherwise a local template is used. Turn this off to keep prefix completion only.',
+    'settings.aiPrompt.title': 'AI prompt completion',
+    'settings.aiPrompt.hint': 'Sends the latest reply, recent prompts, and Session title to the current model to write a fuller next prompt with goal, scope, constraints, and acceptance checks. One call per context, then cached; turn this off to avoid model calls.',
+    'ghost.ai.pending': 'AI is completing the prompt…',
+    'ghost.ai.ready': 'AI prompt suggestion',
+    'ghost.local.ready': 'Prompt suggestion',
+    'ghost.ai.fallback': 'Prompt suggestion (local)',
+    'ghost.ai.hint': 'One AI call for this context',
+    'ghost.local.hint': 'Local template; no model call',
+    'ghost.footer': 'Tab accept · Esc dismiss',
     'settings.shortcut.title': 'Shortcuts',
     'settings.shortcut.hint': 'Available while typing in the composer too; host bindings win on conflicts.',
     'settings.shortcut.palette': 'Command palette',
@@ -978,6 +1026,59 @@ const COMPLETION_WORDS_ZH = Object.freeze([
   '烘焙', '酿造', '搅拌', '推敲', '烹饪', '咀嚼', '煸炒', '打磨',
 ])
 
+/**
+ * Starter prompts offered as light inline completions when the composer is
+ * empty of history. They are intentionally plain, task-shaped prompts rather
+ * than instructions aimed at a particular model.
+ */
+const PROMPT_SUGGESTIONS_EN = Object.freeze([
+  'Review the current repository for high-risk issues and propose concrete fixes',
+  "Summarize this project's architecture, key modules, and data flow",
+  'Add unit tests for this feature, including edge cases',
+  "Explain this code's execution flow and key design tradeoffs",
+  'Turn this requirement into an executable plan with risks and milestones',
+  'Check the latest changes for regressions and list verification commands',
+  "Profile this page's load performance, find the bottleneck, then optimize",
+  'Write a clear README with install, usage, examples, and troubleshooting',
+  'Compare these two implementations and recommend the better fit',
+  'Find the root cause of this error, reproduce it, then fix it',
+  'Write a changelog and acceptance checklist for this change',
+  'Condense this document into one page while keeping key numbers and links',
+])
+
+const PROMPT_SUGGESTIONS_ZH = Object.freeze([
+  '请审查当前仓库的代码，找出高风险问题并给出修复建议',
+  '请总结当前项目的架构、关键模块和数据流',
+  '请为这个功能补一套单元测试，覆盖边界条件',
+  '请解释这段代码的执行流程和关键设计取舍',
+  '请把这段需求拆成可执行的开发计划，并标注风险',
+  '请检查最近的改动是否引入回归，并给出验证命令',
+  '请优化这个页面的加载性能，先定位瓶颈再改',
+  '请帮我写一份清晰的 README，包含安装、使用和示例',
+  '请对比这两个实现，指出差异和更适合当前项目的方案',
+  '请根据报错定位根因，先复现再修复',
+  '请为这次改动写一段 changelog 和验收清单',
+  '请把这份文档压缩成一页要点，保留关键数字和链接',
+])
+
+/**
+ * Starter prompts for a completely blank composer. They stay generic enough to
+ * be useful before the first turn, instead of assuming an existing codebase.
+ */
+const EMPTY_COMPOSER_EN = Object.freeze([
+  'summarize this project',
+  'run the tests',
+  'review recent changes',
+  'check the project structure',
+])
+
+const EMPTY_COMPOSER_ZH = Object.freeze([
+  '梳理一下当前项目',
+  '跑一遍测试',
+  '看一下最近的改动',
+  '检查一下项目结构',
+])
+
 /** The verb/completion pools that match one locale id. */
 function wordPoolsFor(locale) {
   return isChineseLocale(locale)
@@ -1045,6 +1146,9 @@ const DEFAULT_SETTINGS = Object.freeze({
   turnFooter: true,
   animations: true,
   sound: false,
+  ghost: true,
+  ghostContext: true,
+  aiPrompt: true,
 })
 
 /** Clamp one stored settings object into the known shape. */
@@ -1058,6 +1162,9 @@ function normalizeSettings(input) {
     turnFooter: source.turnFooter !== false,
     animations: source.animations !== false,
     sound: source.sound === true,
+    ghost: source.ghost !== false,
+    ghostContext: source.ghostContext !== false,
+    aiPrompt: source.aiPrompt !== false,
   }
 }
 
@@ -1327,6 +1434,120 @@ function assistantTextForMessage(snapshot, messageId) {
   return ''
 }
 
+/** Hard input caps for the local prompt pilot; kept tiny so no session dump happens. */
+const PROMPT_PILOT_BUDGET = Object.freeze({
+  assistant: 4000,
+  tool: 1600,
+  lastUser: 1200,
+  title: 120,
+})
+
+/**
+ * Read the newest finalized assistant prose from the Chat snapshot.
+ *
+ * The composer's next-prompt suggestion should follow the reply the user just
+ * read, so this checks turn tails first and falls back to assistant-step nodes
+ * and the live partial (the caller decides whether a running turn is eligible).
+ *
+ * @param {object} snapshot - Chat snapshot.
+ * @returns {string} newest assistant text, or an empty string.
+ */
+function latestAssistantText(snapshot) {
+  try {
+    const legacy = snapshot && snapshot.legacy
+    const nodes = legacy && Array.isArray(legacy.nodes) ? legacy.nodes : []
+    for (let index = nodes.length - 1; index >= 0; index -= 1) {
+      const node = nodes[index]
+      if (!node || typeof node !== 'object') continue
+      if (node.kind === 'turn-tail') {
+        const closing = node.data && node.data.closing
+        const text = speechTextFromBlocks(closing && closing.blocks)
+        if (text) return text
+      }
+      if (node.kind === 'assistant-step' || node.kind === 'assistant') {
+        const blocks = (node.data && node.data.blocks) || node.blocks
+        const text = speechTextFromBlocks(blocks)
+        if (text) return text
+      }
+    }
+    const partial = legacy && legacy.partial
+    return speechTextFromBlocks(partial && partial.blocks) || ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Read the newest tool result text from the Chat snapshot without assuming one
+ * transport shape. Tool output is only used as a weak signal for the prompt
+ * pilot; its first error line can make a follow-up suggestion more specific.
+ *
+ * @param {object} snapshot - Chat snapshot.
+ * @returns {string} newest tool-result prose, or an empty string.
+ */
+function latestToolResultText(snapshot) {
+  try {
+    const legacy = snapshot && snapshot.legacy
+    const nodes = legacy && Array.isArray(legacy.nodes) ? legacy.nodes : []
+    for (let index = nodes.length - 1; index >= 0; index -= 1) {
+      const node = nodes[index]
+      if (!node || typeof node !== 'object') continue
+      if (node.kind !== 'tool-result' && node.kind !== 'tool' && node.kind !== 'tool-call-result') continue
+      const blocks = (node.data && node.data.blocks) || node.blocks
+      let text = speechTextFromBlocks(blocks)
+      if (!text) {
+        const content = (node.data && (node.data.content || node.data.result)) || node.content
+        if (Array.isArray(content)) text = textFromContent(content)
+        else if (typeof content === 'string') text = content
+      }
+      if (!text && node.data && typeof node.data.text === 'string') text = node.data.text
+      if (!text && typeof node.text === 'string') text = node.text
+      if (text) return String(text).slice(-1600)
+    }
+  } catch {
+    /* a Host snapshot shape we do not recognize */
+  }
+  return ''
+}
+
+/**
+ * Gather the compact, local-only context the prompt pilot may read.
+ *
+ * Keeping this in one pure function means the UI never reaches into random
+ * snapshot fields and the ranking can be tested with plain objects.
+ *
+ * @param {object} snapshot - Chat snapshot.
+ * @returns {{assistantText: string, toolText: string, history: string[], lastUserPrompt: string}}
+ */
+function promptContextFromChat(snapshot) {
+  const legacy = snapshot && snapshot.legacy
+  const nodes = legacy && Array.isArray(legacy.nodes) ? legacy.nodes : []
+  let lastUserIndex = -1
+  let lastAssistantIndex = -1
+  let lastToolIndex = -1
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index]
+    if (!node || typeof node !== 'object') continue
+    if (node.kind === 'user' || node.kind === 'steering') lastUserIndex = index
+    else if (node.kind === 'assistant' || node.kind === 'assistant-step' || node.kind === 'turn-tail') lastAssistantIndex = index
+    else if (node.kind === 'tool-result' || node.kind === 'tool' || node.kind === 'tool-call-result') lastToolIndex = index
+  }
+  const history = collectPromptHistory(nodes, 3).map(function (prompt) {
+    return String(prompt).slice(0, PROMPT_PILOT_BUDGET.lastUser)
+  })
+  return {
+    assistantText: latestAssistantText(snapshot).slice(-PROMPT_PILOT_BUDGET.assistant),
+    toolText: latestToolResultText(snapshot).slice(-PROMPT_PILOT_BUDGET.tool),
+    history,
+    lastUserPrompt: history[0] || '',
+    // A reply or tool result that predates the newest user turn is stale. It
+    // remains useful context, but must not outrank the new user's intent.
+    assistantFresh: lastAssistantIndex < 0 || lastUserIndex < 0 || lastAssistantIndex > lastUserIndex,
+    toolFresh: lastToolIndex < 0 || lastUserIndex < 0 || lastToolIndex > lastUserIndex,
+    lastNodeKind: nodes.length > 0 && nodes[nodes.length - 1] ? String(nodes[nodes.length - 1].kind || '') : '',
+  }
+}
+
 /** Split prose into utterance-sized chunks at sentence or word boundaries. */
 function splitSpeechText(text, max = 1200) {
   const flat = String(text == null ? '' : text).replace(/\s+/g, ' ').trim()
@@ -1363,6 +1584,55 @@ function mapSessionSearchResults(items, limit = 8) {
     if (!sessionId || !snippet || seen.has(sessionId)) continue
     seen.add(sessionId)
     rows.push({ sessionId, snippet: snippet.length > 96 ? snippet.slice(0, 95) + '…' : snippet })
+    if (rows.length >= max) break
+  }
+  return rows
+}
+
+/**
+ * Resolve the Host's global pinned-session ids into palette rows.
+ *
+ * DSH keeps pins registry-global, but its sidebar only leads each expanded
+ * workspace with pinned rows. When a pinned Session lives in a collapsed
+ * workspace it has no visible entry anywhere, so the palette needs its own
+ * small pinned section built from the same workspace and Session snapshots.
+ */
+function mapPinnedSessions(workspaceSnapshot, sessionSnapshot, limit = 8) {
+  const rows = []
+  const pinned = Array.isArray(workspaceSnapshot && workspaceSnapshot.pinnedSessionIds)
+    ? workspaceSnapshot.pinnedSessionIds
+    : []
+  const sessions = (sessionSnapshot && sessionSnapshot.byId) || {}
+  const workspaces = Array.isArray(workspaceSnapshot && workspaceSnapshot.items)
+    ? workspaceSnapshot.items
+    : []
+  const owners = new Map()
+  for (const workspace of workspaces) {
+    if (!workspace || !Array.isArray(workspace.sessionIds)) continue
+    for (const sessionId of workspace.sessionIds) owners.set(String(sessionId), workspace)
+  }
+  const max = Math.max(1, Number(limit) || 8)
+  const seen = new Set()
+  for (const rawId of pinned) {
+    if (rawId === undefined || rawId === null) continue
+    const sessionId = String(rawId)
+    if (!sessionId || seen.has(sessionId)) continue
+    const entry = sessions[sessionId]
+    if (!entry) continue
+    const title = String(
+      (entry.projectionValues && entry.projectionValues.title) ||
+      entry.title ||
+      entry.preview ||
+      '',
+    ).replace(/\s+/g, ' ').trim()
+    if (!title) continue
+    seen.add(sessionId)
+    const owner = owners.get(sessionId)
+    rows.push({
+      sessionId,
+      title: title.length > 80 ? title.slice(0, 79) + '…' : title,
+      workspaceTitle: owner && owner.title ? String(owner.title) : '',
+    })
     if (rows.length >= max) break
   }
   return rows
@@ -1443,6 +1713,383 @@ function collectPromptHistory(nodes, limit = 50) {
     if (result.length >= max) break
   }
   return result
+}
+
+/**
+ * Backward-compatible alias for the full prompt draft.
+ *
+ * The old short-ghost engine is intentionally gone: an empty composer now gets
+ * a complete draft (the local fallback, or the seed for the optional AI pass),
+ * so callers of the old name receive the same complete text.
+ *
+ * @param {object} input - conversation context accepted by buildPromptDraft.
+ * @returns {object|null} complete prompt suggestion.
+ */
+function suggestNextPrompt(input) {
+  return buildPromptDraft(input)
+}
+
+/**
+ * Build a complete, detailed prompt draft for the empty composer.
+ *
+ * This is the local fallback and the seed for the optional AI pass. Unlike the
+ * old one-line ghost, it deliberately writes a full instruction: goal, known
+ * context, scope, execution, and verification. The AI route can rewrite it;
+ * when the route is off or unavailable the user still gets a useful draft.
+ *
+ * @param {{assistantText?: string, toolText?: string, lastUserPrompt?: string, sessionTitle?: string, sessionId?: string, running?: boolean, locale?: string, stats?: object, assistantFresh?: boolean, toolFresh?: boolean}} input
+ * @returns {{full: string, tail: string, contextual: true, kind: string, confidence: number, score: number, key: number, alternatives: string[]}|null}
+ */
+function buildPromptDraft(input) {
+  const source = input && typeof input === 'object' ? input : {}
+  if (source.running) return null
+  const assistantRaw = String(source.assistantText == null ? '' : source.assistantText).slice(-PROMPT_PILOT_BUDGET.assistant)
+  const toolRaw = String(source.toolText == null ? '' : source.toolText).slice(-PROMPT_PILOT_BUDGET.tool)
+  const assistant = flattenPrompt(assistantRaw).slice(-1800)
+  const toolText = flattenPrompt(toolRaw).slice(-800)
+  const lastUser = flattenPrompt(String(source.lastUserPrompt == null ? '' : source.lastUserPrompt).slice(-PROMPT_PILOT_BUDGET.lastUser))
+  const title = flattenPrompt(String(source.sessionTitle == null ? '' : source.sessionTitle).slice(0, PROMPT_PILOT_BUDGET.title))
+  const chinese = /[\u4e00-\u9fff]/.test(lastUser || assistant) || isChineseLocale(source.locale)
+  const assistantFresh = source.assistantFresh !== false
+  const toolFresh = source.toolFresh !== false
+  const staleWeight = 0.55
+  const nextStep = assistantFresh ? extractNextStep(assistantRaw, chinese) : ''
+  const questionTail = /[?？]\s*$/.test(assistant) ||
+    /(请确认|需要你确认|你希望|要不要|可以吗|是否继续|告诉我|shall i|should i|do you want|would you like|let me know)/i.test(assistant)
+  const noError = /(没有错误|无错误|没有报错|无报错|0 ?个?错误|no errors?|no failures?|all tests? pass)/i.test(assistant)
+  const error = !noError && /(报错|错误|异常|失败|未能|无法|\berror\b|\berrors\b|\bfailed\b|\bfailure\b|\bexception\b|\btraceback\b)/i.test(assistant)
+  const toolError = !error && toolText && !/no errors?|全部通过|没有错误/i.test(toolText) &&
+    /(报错|错误|异常|失败|未能|无法|\berror\b|\bfailed\b|\bfailure\b|\bexception\b|\btraceback\b)/i.test(toolText)
+
+  const make = function (kind, confidence) {
+    const full = chinese ? FULL_PROMPTS_ZH[kind] : FULL_PROMPTS_EN[kind]
+    if (!full) return null
+    const text = flattenPrompt(full)
+    if (!text || text.toLowerCase() === lastUser.toLowerCase()) return null
+    return {
+      full: text,
+      tail: text,
+      contextual: true,
+      kind: kind,
+      confidence: confidence,
+      score: Math.max(0, Math.min(1, confidence + pilotBoost(source.stats, kind))),
+      key: hash32(kind + '|' + text + '|' + assistant.slice(-120) + '|' + lastUser),
+      alternatives: [],
+    }
+  }
+
+  if (nextStep) {
+    const text = chinese
+      ? '继续当前任务。下一步：' + nextStep + '。开始前先确认最新结论、改动范围和验收标准；完成后运行相关验证，并汇报结果、风险和下一步。'
+      : 'Continue the current task. Next step: ' + nextStep + '. Before starting, confirm the latest conclusion, the change scope, and the acceptance checks; when done, run the relevant verification and report the result, risks, and the next step.'
+    return draftResult('next-step', text, chinese, assistantFresh ? 0.96 : 0.96 * staleWeight, assistant, lastUser, source.stats)
+  }
+  // A failed turn is exactly when a complete diagnostic prompt is most useful;
+  // an empty composer should not silently drop the suggestion after an error.
+  if ((assistantFresh && error) || (toolFresh && toolError)) {
+    return make('error', 0.54)
+  }
+  if (questionTail) {
+    return make('question', assistantFresh ? 0.86 : 0.86 * staleWeight)
+  }
+  if (/(已(完成|修复|实现|更新|交付)|全部通过|测试通过|\b(done|completed|finished|fixed|implemented|passed)\b)/i.test(assistant)) {
+    return make('completed', assistantFresh ? 0.76 : 0.76 * staleWeight)
+  }
+  if (/(计划|步骤|待办|方案|roadmap|\bplan\b|\bnext steps?\b)/i.test(assistant)) {
+    return make('plan', assistantFresh ? 0.7 : 0.7 * staleWeight)
+  }
+  if (/(修改了|改动了|变更了|diff\b|changed files?|git status|文件.*改)/i.test(assistant)) {
+    return make('review-changes', assistantFresh ? 0.68 : 0.68 * staleWeight)
+  }
+
+  const followUp = classifyPromptForFollowUp(lastUser, chinese)
+  if (followUp) {
+    const kind = /审|review|audit|risk|issue|bug|问题/.test(lastUser) ? 'review'
+      : /测试|单测|test|coverage|回归/.test(lastUser) ? 'tests'
+        : /性能|优化|慢|卡|performance|optimi[sz]e/.test(lastUser) ? 'performance'
+          : /readme|文档|说明|doc|注释/.test(lastUser) ? 'docs'
+            : /解释|为什么|原理|explain|why|怎么工作/.test(lastUser) ? 'explain'
+              : /部署|发布|上线|回滚|deploy|release|rollback/.test(lastUser) ? 'deploy'
+                : /架构|重构|设计|architecture|refactor|design/.test(lastUser) ? 'architecture'
+                  : /实现|开发|改|修复|新增|build|implement|fix|add/.test(lastUser) ? 'implement' : 'continue'
+    return make('follow-up-' + kind, 0.62)
+  }
+  if (!assistant && title) {
+    const text = chinese
+      ? '继续当前任务「' + title + '」：先总结已完成部分和未完成项，再给出一个具体的下一步并执行；完成后运行验证并汇报结果。'
+      : 'Continue the current task "' + title + '": summarize what is done and what is left, then take one concrete next step and execute it; run verification and report the result.'
+    return draftResult('session-title', text, chinese, 0.45, assistant, lastUser, source.stats)
+  }
+  // A generic but still complete fallback: if a reply exists without a stronger
+  // signal, ask for a concrete next step instead of showing nothing.
+  if (assistant) return make('assistant-followup', 0.38)
+  if (!assistant && !lastUser) {
+    return make('starter', 0.42)
+  }
+  return make('starter', 0.34)
+}
+
+/** Shape one fully written local prompt into the suggestion contract. */
+function draftResult(kind, full, chinese, confidence, assistant, lastUser, stats) {
+  const text = flattenPrompt(full)
+  if (!text) return null
+  return {
+    full: text,
+    tail: text,
+    contextual: true,
+    kind: kind,
+    confidence: confidence,
+    score: Math.max(0, Math.min(1, confidence + pilotBoost(stats, kind))),
+    key: hash32(kind + '|' + text + '|' + assistant.slice(-120) + '|' + lastUser),
+    alternatives: [],
+  }
+}
+
+const FULL_PROMPTS_ZH = Object.freeze({
+  question: '按你刚才的建议继续：请先说明你推荐哪个方案以及关键理由，再直接执行；完成后运行相关验证，并汇报结果、风险和下一步。',
+  completed: '基于刚才完成的结果继续：检查改动是否覆盖目标，运行相关测试或构建并整理可复现步骤；确认通过后提交并推送，最后汇报结果、风险和下一步。',
+  plan: '按上面的计划开始执行：先完成第一步并说明目标、范围和验收标准；每完成一步运行验证，最后汇总结果、风险与剩余项。',
+  'review-changes': '请审查刚才的改动：先列出改动范围和目的，再运行相关测试或构建，指出风险、遗漏和回滚方式；确认无误后整理提交信息。',
+  'follow-up-review': '请继续审查当前实现：重点检查边界条件、错误处理、权限与数据一致性；给出按优先级排序的问题和具体修复建议，并运行相关验证。',
+  'follow-up-tests': '请补充边界和失败路径测试：说明覆盖点，构造输入并运行测试；测试通过后汇报新增用例和仍存在的风险。',
+  'follow-up-performance': '请先测量性能：给出基准场景、关键指标和可复现命令，定位瓶颈后再优化；优化后重跑基准并对比结果。',
+  'follow-up-docs': '请更新相关文档：先核对当前行为与命令，再补充使用步骤、配置项和限制；最后检查示例命令可执行。',
+  'follow-up-explain': '请继续解释这个机制：先给出结论，再用最小示例逐步说明关键路径、边界和常见误解；最后列出仍需验证的假设。',
+  'follow-up-deploy': '请准备发布：先核对版本、配置和回滚步骤，再运行发布前验证；列出风险、依赖和回滚方案，确认后再执行。',
+  'follow-up-architecture': '请先梳理当前结构：列出模块边界、数据流和耦合点，指出两个最值得调整的地方；给出最小改动方案和验证方式。',
+  'follow-up-implement': '请继续实现当前目标：先说明改动范围和验收标准，再完成代码与测试；最后运行验证并汇报结果、风险和下一步。',
+  'follow-up-continue': '请继续当前任务：先总结已完成部分和未完成项，再给出一个具体下一步并执行；完成后运行验证并汇报结果。',
+  error: '先复现并定位刚才的失败：给出报错摘要、复现命令和根因假设；修复后运行同一验证，对比修复前后的结果并说明剩余风险。',
+  'assistant-followup': '基于上面的结论继续：先总结已经确认的结果和未决问题，再提出一个具体下一步并执行；完成后运行验证并汇报结果、风险和下一步。',
+  starter: '请先通读当前项目结构和关键入口，说明你理解的目标、约束和风险，再提出一个可执行的第一步；先不要改代码，等我确认方案。',
+})
+
+const FULL_PROMPTS_EN = Object.freeze({
+  question: 'Continue with your recommendation: first state which option you recommend and why, then execute it; afterwards run the relevant verification and report the result, risks, and next step.',
+  completed: 'Continue from the completed work: check that the change covers the goal, run the relevant tests or build, and record reproducible steps; once it passes, commit and push, then report the result, risks, and next step.',
+  plan: 'Start executing the plan above: complete the first step and state its goal, scope, and acceptance checks; verify after each step, then summarize the result, risks, and remaining work.',
+  'review-changes': 'Review the change just made: list its scope and purpose, run the relevant tests or build, and call out risks, gaps, and rollback steps; then prepare the commit message.',
+  'follow-up-review': 'Continue reviewing the implementation: focus on edge cases, error handling, permissions, and data consistency; prioritize concrete defects, fix them, and run the relevant verification.',
+  'follow-up-tests': 'Add edge-case and failure-path tests: state what is covered, build the inputs, and run the suite; then report the new cases and any remaining risks.',
+  'follow-up-performance': 'Measure performance first: define the benchmark, key metrics, and reproducible command, locate the bottleneck, then optimize; rerun the benchmark and compare before and after.',
+  'follow-up-docs': 'Update the documentation: confirm the current behavior and commands, add usage steps, configuration, and limitations, then check that every example command works.',
+  'follow-up-explain': 'Explain the mechanism further: give the conclusion first, then walk through the critical path, boundaries, and common misconceptions with a minimal example; end with assumptions still to verify.',
+  'follow-up-deploy': 'Prepare the release: verify the version, configuration, and rollback steps, then run the pre-release checks; list the risks, dependencies, and rollback plan before executing.',
+  'follow-up-architecture': 'Map the current structure first: list module boundaries, data flow, and coupling points, name the two changes worth making, and propose the smallest safe change with verification.',
+  'follow-up-implement': 'Continue implementing the current goal: state the scope and acceptance checks, complete the code and tests, then run verification and report the result, risks, and next step.',
+  'follow-up-continue': 'Continue the current task: summarize what is done and what is left, then take one concrete next step; run verification and report the result.',
+  error: 'Reproduce and localize the failure: give the error summary, the reproduction command, and a root-cause hypothesis; after fixing it, run the same verification, compare before and after, and state the remaining risks.',
+  'assistant-followup': 'Continue from the conclusion above: summarize what is confirmed and what is unresolved, then take one concrete next step; run verification and report the result, risks, and next step.',
+  starter: 'First read the current project structure and key entry points, then state the goal, constraints, and risks you understand and propose one executable first step. Do not change code until I confirm the plan.',
+})
+
+
+
+/** Collapse whitespace for a stable, single-line suggestion comparison. */
+function flattenPrompt(value) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim()
+}
+
+/** Remove one markdown list marker / emphasis wrapper from a line. */
+function stripMarkdownLine(value) {
+  return String(value == null ? '' : value)
+    .replace(/^\s*(?:#{1,6}\s*|[-*•>]+|\d+[.)、])\s*/, '')
+    .replace(/\*\*/g, '')
+    .trim()
+}
+
+/** Trim one extracted action into a single actionable sentence. */
+function cleanActionText(value) {
+  let text = flattenPrompt(value)
+  text = text.replace(/^[-*•>]+/, '').replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim()
+  const cut = text.search(/[。！？!?；;]/)
+  if (cut > 4) text = text.slice(0, cut).trim()
+  if (text.length > 96) text = text.slice(0, 95).trim() + '…'
+  return text
+}
+
+/**
+ * Extract the assistant's explicit next step, preferring labeled lines over a
+ * sentence buried in prose. "Next step: run the failing test" becomes a real
+ * suggestion instead of the generic "continue" fallback.
+ */
+function extractNextStep(text, chinese) {
+  const raw = String(text == null ? '' : text).replace(/\r/g, '').replace(/```[\s\S]*?```/g, '')
+  const lines = raw.split('\n').map(stripMarkdownLine).filter(Boolean)
+  const label = /^(下一步|接下来|后续建议|后续步骤|后续|建议先|next steps?|next)\s*(?:[:：\-—]\s*)?(.*)$/i
+  // Prefer the last explicit step: a long answer may mention an earlier plan
+  // and then revise it in the closing paragraph.
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const match = lines[index].match(label)
+    if (!match) continue
+    let rest = cleanActionText(match[2] || '')
+    if (!rest) {
+      for (let next = index + 1; next < lines.length; next += 1) {
+        if (lines[next]) {
+          rest = cleanActionText(lines[next])
+          break
+        }
+      }
+    }
+    if (rest.length >= 4 && !/^(是|为|：|:)/.test(rest)) {
+      if (/^(如果|若|是否|你希望|需要你)/.test(rest)) return ''
+      return rest
+    }
+  }
+  const inline = Array.from(raw.matchAll(/(?:下一步|next step)[^。！？!?\n]{4,180}/gi))
+  for (let index = inline.length - 1; index >= 0; index -= 1) {
+    const rest = cleanActionText(inline[index][0].replace(/^(下一步|next step)\s*[:：\-—]?\s*/i, ''))
+    if (rest.length >= 4) return rest
+  }
+  return ''
+}
+
+/** Classify the last user prompt into the most useful follow-up shape. */
+function classifyPromptForFollowUp(value, chinese) {
+  const text = flattenPrompt(value)
+  if (!text) return ''
+  if (chinese) {
+    if (/(审查|检查|review|审计|风险|问题|bug)/i.test(text)) return '修高优先级问题'
+    if (/(测试|单测|test|coverage|回归)/i.test(text)) return '补边界测试'
+    if (/(性能|优化|慢|卡|performance|optimi[sz]e)/i.test(text)) return '先测性能'
+    if (/(计划|拆解|方案|步骤|plan|roadmap)/i.test(text)) return '开始第一步'
+    if (/(readme|文档|说明|doc|注释)/i.test(text)) return '补一下文档'
+    if (/(解释|为什么|原理|explain|why|怎么工作)/i.test(text)) return '再举个例子'
+    if (/(部署|发布|上线|回滚|deploy|release|rollback)/i.test(text)) return '准备发布'
+    if (/(架构|重构|设计|architecture|refactor|design)/i.test(text)) return '先理清结构'
+    if (/(实现|开发|改|修复|新增|build|implement|fix|add)/i.test(text)) return '继续实现'
+    return '继续'
+  }
+  if (/(review|audit|risk|issue|bug|check)/i.test(text)) return 'fix high-priority issues'
+  if (/(test|coverage|regression)/i.test(text)) return 'add edge tests'
+  if (/(performance|optimi[sz]e|slow|latency)/i.test(text)) return 'measure performance first'
+  if (/(plan|roadmap|steps|break down)/i.test(text)) return 'start with step one'
+  if (/(readme|docs?|documentation|comments?)/i.test(text)) return 'update the docs'
+  if (/(explain|why|how does|how it works)/i.test(text)) return 'give an example'
+  if (/(deploy|release|rollback)/i.test(text)) return 'prepare the release'
+  if (/(architecture|refactor|design)/i.test(text)) return 'map the structure first'
+  if (/(implement|build|fix|add|change)/i.test(text)) return 'finish the implementation'
+  return 'continue'
+}
+
+/* ---------------------------------------------------------------------- */
+/* Prompt-pilot local feedback                                            */
+/* ---------------------------------------------------------------------- */
+
+/** localStorage key for aggregate, content-free suggestion feedback. */
+const PILOT_STATS_KEY = 'dsh.claude-mode.prompt-pilot.v1'
+
+const PILOT_KINDS_MAX = 24
+const PILOT_COUNT_MAX = 1000000
+
+/** Normalize persisted prompt-pilot counts into a bounded, known shape. */
+function normalizePilotStats(input) {
+  const source = input && typeof input === 'object' ? input : {}
+  const kinds = {}
+  const rawKinds = source.kinds && typeof source.kinds === 'object' ? source.kinds : {}
+  const names = Object.keys(rawKinds).slice(0, PILOT_KINDS_MAX)
+  for (const name of names) {
+    if (name === '__proto__' || name === 'prototype' || name === 'constructor') continue
+    const item = rawKinds[name] && typeof rawKinds[name] === 'object' ? rawKinds[name] : {}
+    const count = function (value) {
+      const number = Math.floor(Number(value) || 0)
+      return number > 0 ? Math.min(PILOT_COUNT_MAX, number) : 0
+    }
+    kinds[String(name).slice(0, 40)] = {
+      shown: count(item.shown),
+      accepted: count(item.accepted),
+      dismissed: count(item.dismissed),
+    }
+  }
+  const last = function (value) {
+    const item = value && typeof value === 'object' ? value : {}
+    return { key: String(item.key || ''), at: Math.max(0, Number(item.at) || 0) }
+  }
+  return {
+    version: 1,
+    kinds: kinds,
+    lastAccepted: last(source.lastAccepted),
+    lastDismissed: last(source.lastDismissed),
+  }
+}
+
+/** One accepted/dismissed ratio, bounded so feedback never dominates content. */
+function pilotBoost(stats, kind) {
+  const normalized = normalizePilotStats(stats)
+  const item = normalized.kinds[String(kind)]
+  if (!item || item.shown < 3) return 0
+  const acceptance = item.accepted / item.shown
+  const dismissal = item.dismissed / item.shown
+  return Math.max(-0.04, Math.min(0.08, acceptance * 0.1 - dismissal * 0.05))
+}
+
+/** Update one aggregate counter without storing any prompt text. */
+function recordPilotEvent(stats, kind, event, at = Date.now(), key = '') {
+  const normalized = normalizePilotStats(stats)
+  const name = String(kind || 'unknown').slice(0, 40)
+  const item = normalized.kinds[name] || { shown: 0, accepted: 0, dismissed: 0 }
+  const next = { shown: item.shown, accepted: item.accepted, dismissed: item.dismissed }
+  if (event === 'shown' || event === 'accepted' || event === 'dismissed') {
+    next[event] = Math.min(PILOT_COUNT_MAX, next[event] + 1)
+  }
+  const result = {
+    version: 1,
+    kinds: Object.assign({}, normalized.kinds),
+    lastAccepted: normalized.lastAccepted,
+    lastDismissed: normalized.lastDismissed,
+  }
+  result.kinds[name] = next
+  if (event === 'accepted') result.lastAccepted = { key: String(key || ''), at: Math.max(0, Number(at) || 0) }
+  if (event === 'dismissed') result.lastDismissed = { key: String(key || ''), at: Math.max(0, Number(at) || 0) }
+  return result
+}
+
+/** Whether a suggestion key was recently accepted/dismissed and should rest. */
+function suggestionSuppressed(stats, key, now = Date.now(), limits = {}) {
+  const normalized = normalizePilotStats(stats)
+  const dismissedFor = Math.max(0, Number(limits.dismissed) || 60000)
+  const wanted = String(key == null ? '' : key)
+  if (!wanted) return false
+  // Accepting is not a reason to hide the same suggestion forever: if the
+  // user deletes the accepted draft, the next prompt should come back. Only
+  // an explicit Esc dismissal cools the key down.
+  const dismissed = normalized.lastDismissed
+  if (dismissed.key === wanted && now - dismissed.at >= 0 && now - dismissed.at < dismissedFor) return true
+  return false
+}
+
+/**
+ * Find one inline prompt completion for the current draft.
+ *
+ * The lookup is deliberately cheap and local: recent prompts first, then a
+ * small set of task-shaped starter prompts. A completion only appears when the
+ * draft is a prefix and the remainder would fit on the same line; the caller
+ * owns the caret and focus checks.
+ *
+ * @param {string} draft - current composer text.
+ * @param {string[]} history - newest-first prompts from the active Session.
+ * @param {string} locale - locale id used to pick starter prompts.
+ * @returns {{full: string, tail: string}|null} accepted text and its ghost tail.
+ */
+function suggestPromptCompletion(draft, history, locale) {
+  const raw = String(draft == null ? '' : draft)
+  const probe = raw.trim()
+  if (probe.length < 2 || /[\r\n]/.test(probe)) return null
+  if (probe[0] === '/' || probe[0] === '@') return null
+  const lower = probe.toLowerCase()
+  const builtins = isChineseLocale(locale) ? PROMPT_SUGGESTIONS_ZH : PROMPT_SUGGESTIONS_EN
+  const seen = new Set()
+  const pools = [Array.isArray(history) ? history : [], builtins]
+  for (const pool of pools) {
+    for (const value of pool) {
+      const full = String(value == null ? '' : value).replace(/\s+/g, ' ').trim()
+      if (!full || full.length <= probe.length || seen.has(full)) continue
+      seen.add(full)
+      if (!full.toLowerCase().startsWith(lower)) continue
+      return { full, tail: full.slice(probe.length) }
+    }
+  }
+  return null
 }
 
 /**
@@ -1829,6 +2476,145 @@ const STYLES = `
 .ccm-palette-foot-item { display: inline-flex; align-items: center; gap: 5px; }
 .ccm-palette-foot-status { margin-left: auto; color: var(--dsw-alias-brand-primary); }
 
+/* Inline prompt completion ghost appended to document.body. Fixed positioning
+   and viewport coordinates come from the component; only paint lives here. */
+.ccm-ghost {
+  position: fixed;
+  z-index: 2200;
+  display: none;
+  overflow: hidden;
+  white-space: pre;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
+  color: var(--dsw-alias-label-secondary, #6b6b6b);
+  opacity: 0.96;
+  font-family: var(--dsh-font-family, inherit);
+}
+
+/* Screen-reader announcement for a context-aware suggestion. */
+.ccm-ghost-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Empty-composer suggestions replace the Host placeholder with the ghost
+   sentence. Current hosts render that placeholder as a sibling node; the
+   pseudo-element and attribute rules cover older renderers. */
+[data-composer-input="true"].ccm-ghost-placeholder ~ [data-composer-placeholder="true"] {
+  visibility: hidden !important;
+}
+
+[data-composer-input="true"].ccm-ghost-placeholder::before,
+[data-composer-input="true"].ccm-ghost-placeholder::after {
+  content: none !important;
+}
+
+@media (prefers-contrast: more) {
+  .ccm-ghost {
+    color: var(--dsw-alias-label-secondary, #555);
+    opacity: 1;
+  }
+}
+
+/* Complete, multi-line prompt suggestion. Long prompts must stay readable:
+   the body wraps, scrolls inside a capped card, and keeps the composer focused
+   because pointerdown is cancelled by the component. */
+.ccm-ai-preview {
+  position: fixed;
+  z-index: 2400;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  max-height: min(360px, 44vh);
+  padding: 12px 14px 10px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-lg, 10px);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: var(--dsw-alias-label-primary);
+  pointer-events: auto;
+  user-select: text;
+  font-family: var(--dsh-font-family, inherit);
+}
+
+.ccm-ai-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ccm-ai-preview-title {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--dsw-alias-brand-primary);
+  letter-spacing: 0.01em;
+}
+
+.ccm-ai-preview-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccm-ai-preview-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 3px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  line-height: 23px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ccm-ai-preview-foot {
+  flex: 0 0 auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+@media (prefers-contrast: more) {
+  .ccm-ai-preview {
+    border-color: var(--dsw-alias-label-secondary);
+  }
+  .ccm-ai-preview-body {
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+@media (max-width: 560px) {
+  .ccm-ai-preview {
+    max-height: min(320px, 46vh);
+    padding: 10px 12px 9px;
+  }
+  .ccm-ai-preview-body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Turn footer                                                         */
 /* ------------------------------------------------------------------ */
@@ -2183,7 +2969,7 @@ const STYLES = `
  */
 
 /** Rendered plugin version (also shown in the Settings about card). */
-const VERSION = '0.5.0'
+const VERSION = '1.0.0'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -2206,13 +2992,22 @@ function composerText(element) {
   }
 }
 
+/** Whether a DOM node currently paints; hidden React leftovers should not block. */
+function isElementVisible(node) {
+  try {
+    return Boolean(node && (node.offsetParent !== null || (node.getClientRects && node.getClientRects().length > 0)))
+  } catch {
+    return false
+  }
+}
+
 /** Whether a host popup (slash menu, autocomplete) currently owns the arrows. */
 function hostMenuOpen() {
   try {
     const nodes = document.querySelectorAll('[role="listbox"], [role="menu"]')
     for (const node of nodes) {
       if (node.closest && node.closest('.ccm-palette, .ccm-shortcuts')) continue
-      if (node.offsetParent !== null) return true
+      if (isElementVisible(node)) return true
     }
   } catch {
     /* ignore */
@@ -2230,7 +3025,731 @@ function focusComposer() {
   }
 }
 
-/** Trim one history row to a single short palette title. */
+/** Locate the host's resident composer editor. */
+function composerEditor() {
+  try {
+    const editor = document.querySelector('[contenteditable="true"][data-composer-input="true"]')
+    if (editor && editor.offsetParent !== null && !(editor.closest && editor.closest('[role="dialog"]'))) return editor
+    const fallback = document.querySelector('[contenteditable="true"]')
+    if (fallback && !(fallback.closest && fallback.closest('[role="dialog"]'))) return fallback
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+/** Caret rectangle only while the caret sits at the end of the composer. */
+function caretAtComposerEnd(editor) {
+  try {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return null
+    const range = selection.getRangeAt(0)
+    if (!editor.contains(range.startContainer)) return null
+    const tail = document.createRange()
+    tail.setStart(range.startContainer, range.startOffset)
+    tail.setEnd(editor, editor.childNodes.length)
+    if (tail.toString().replace(/\s+/g, '') !== '') return null
+    const rects = range.getClientRects()
+    let rect = rects && rects.length > 0 ? rects[rects.length - 1] : range.getBoundingClientRect()
+    if (!rect || (!rect.width && !rect.height)) {
+      const box = editor.getBoundingClientRect()
+      if (!box.width || !box.height) return null
+      const lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 20
+      rect = { left: box.left + 8, top: box.top + 8, width: 0, height: lineHeight }
+    }
+    return rect
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Rect at the start of an empty composer, used for a full-sentence suggestion.
+ * An empty contenteditable has no useful selection rect in Chromium, so the
+ * editor's own padding box is the reliable origin.
+ */
+function composerStartRect(editor) {
+  try {
+    const box = editor.getBoundingClientRect()
+    const style = getComputedStyle(editor)
+    const lineHeight = parseFloat(style.lineHeight) || 20
+    return {
+      left: box.left + (parseFloat(style.paddingLeft) || 8),
+      top: box.top + (parseFloat(style.paddingTop) || 8),
+      height: lineHeight,
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Current Session title from the Host document title (empty for a blank one). */
+function sessionTitleFromDocument() {
+  try {
+    const raw = String(document.title || '')
+      .replace(/\s*[—–-]\s*DeepSeek Harness\s*$/i, '')
+      .trim()
+    if (!raw || /^(DeepSeek Harness|新会话|未命名|New session|Untitled)$/i.test(raw)) return ''
+    return raw
+  } catch {
+    return ''
+  }
+}
+
+/** Read aggregate prompt-pilot feedback; no prompt text is persisted. */
+function readPromptPilotStats() {
+  try {
+    const raw = window.localStorage.getItem(PILOT_STATS_KEY)
+    return normalizePilotStats(raw ? JSON.parse(raw) : null)
+  } catch {
+    return normalizePilotStats(null)
+  }
+}
+
+/** Persist aggregate prompt-pilot feedback, swallowing private-mode errors. */
+function savePromptPilotStats(stats) {
+  try {
+    window.localStorage.setItem(PILOT_STATS_KEY, JSON.stringify(normalizePilotStats(stats)))
+  } catch {
+    /* storage can be unavailable in private or embedded contexts */
+  }
+}
+
+/**
+ * Optional AI pass for the empty composer. The Host row exposes one same-origin
+ * route; the client only calls it when the local, detailed draft is already on
+ * screen, and caches the result per context so a delete-after-accept or a
+ * second focus never pays for the same prompt twice.
+ */
+const AI_PROMPT_ROUTE = '/dsh-claude-mode/ai-prompt'
+const AI_CACHE_TTL = 10 * 60 * 1000
+const AI_CACHE_MAX = 8
+const AI_PROMPT_MAX = 1400
+
+function aiContextKey(context, locale, localPrompt) {
+  return hash32([
+    String(locale || ''),
+    String(context && context.assistantText || '').slice(-4000),
+    String(context && context.toolText || '').slice(-1200),
+    String(context && context.lastUserPrompt || ''),
+    String(context && context.sessionTitle || ''),
+    String(localPrompt || ''),
+  ].join('|'))
+}
+
+function requestAiPrompt(context, locale, localPrompt, signal) {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+    return Promise.reject(new Error('fetch unavailable'))
+  }
+  const body = {
+    locale: String(locale || 'zh-CN'),
+    context: {
+      sessionTitle: String(context && context.sessionTitle || '').slice(0, 160),
+      lastUserPrompt: String(context && context.lastUserPrompt || '').slice(-1600),
+      assistantText: String(context && context.assistantText || '').slice(-6000),
+      toolText: String(context && context.toolText || '').slice(-1600),
+      localPrompt: String(localPrompt || '').slice(0, 1600),
+      assistantFresh: !context || context.assistantFresh !== false,
+    },
+  }
+  return window.fetch(AI_PROMPT_ROUTE, {
+    method: 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: {
+      'content-type': 'application/json',
+      'x-dsh-claude-mode': '1',
+    },
+    body: JSON.stringify(body),
+    signal,
+  }).then(function (response) {
+    if (!response.ok) throw new Error('AI prompt HTTP ' + response.status)
+    return response.json()
+  }).then(function (payload) {
+    if (!payload || payload.ok !== true) throw new Error(String(payload && payload.reason || 'AI prompt failed'))
+    const text = String(payload.prompt || '').trim()
+    return text ? text.slice(0, AI_PROMPT_MAX) : ''
+  })
+}
+
+/**
+ * Inline prompt completion for the resident composer.
+ *
+ * The editor stays host-owned: this entry appends one fixed, pointer-events-none
+ * ghost span to the document body (the slot explicitly requires body-level fixed
+ * overlays), measures the caret only when it is at the end of the draft, and
+ * accepts with Tab through the composer's own draft action. The ghost is light
+ * secondary text; accepted text is ordinary composer text.
+ */
+function createGhostSuggestion(ctx, store, t, getLocale) {
+  return function GhostSuggestion(props) {
+    const settings = useSettings(store)
+    const useInput = typeof props.useInput === 'function' ? props.useInput : function () { return undefined }
+    // Subscribe to the draft so the component re-renders with the host input
+    // state; the DOM listeners below handle caret moves between renders.
+    const inputDraft = useInput(function (state) {
+      return state && typeof state.draft === 'string' ? state.draft : ''
+    })
+    // Context source for the empty-composer suggestion: the same Chat snapshot
+    // the run bar uses, read here so a finished reply can refresh the ghost
+    // without requiring another keystroke.
+    const useChat = typeof props.useChat === 'function' ? props.useChat : useNoChat
+    const chatSnapshot = useChat(selectChatSnapshot)
+    const chatRef = React.useRef(chatSnapshot)
+    const refreshRef = React.useRef(null)
+    chatRef.current = chatSnapshot
+    React.useEffect(function () {
+      if (refreshRef.current) refreshRef.current()
+    }, [chatSnapshot, inputDraft])
+
+    React.useEffect(function () {
+      if (!settings.enabled || settings.ghost === false) return undefined
+      const element = document.createElement('span')
+      element.className = 'ccm-ghost'
+      element.setAttribute('aria-hidden', 'true')
+      element.setAttribute('data-claude-mode', '')
+      element.style.display = 'none'
+      document.body.appendChild(element)
+      const live = document.createElement('span')
+      live.className = 'ccm-ghost-live'
+      live.setAttribute('data-claude-mode', '')
+      live.setAttribute('role', 'status')
+      live.setAttribute('aria-live', 'polite')
+      live.setAttribute('aria-atomic', 'true')
+      document.body.appendChild(live)
+
+      const panel = document.createElement('div')
+      panel.className = 'ccm-ai-preview'
+      panel.setAttribute('data-claude-mode', '')
+      panel.setAttribute('role', 'note')
+      panel.style.display = 'none'
+      const panelHead = document.createElement('div')
+      panelHead.className = 'ccm-ai-preview-head'
+      const panelTitle = document.createElement('span')
+      panelTitle.className = 'ccm-ai-preview-title'
+      const panelHint = document.createElement('span')
+      panelHint.className = 'ccm-ai-preview-hint'
+      panelHead.appendChild(panelTitle)
+      panelHead.appendChild(panelHint)
+      const panelBody = document.createElement('div')
+      panelBody.className = 'ccm-ai-preview-body'
+      const panelFoot = document.createElement('div')
+      panelFoot.className = 'ccm-ai-preview-foot'
+      panel.appendChild(panelHead)
+      panel.appendChild(panelBody)
+      panel.appendChild(panelFoot)
+      panel.addEventListener('mousedown', function (event) {
+        // Keep the composer focused while the user scrolls or reads the card.
+        event.preventDefault()
+      })
+      document.body.appendChild(panel)
+
+      let candidate = null
+      let frame = 0
+      let heartbeat = 0
+      let dwellTimer = 0
+      let disposed = false
+      let emptyEditor = null
+      let placeholderValue
+      let placeholderActive = false
+      let focusAt = 0
+      let lastShownKey = null
+      let lastAnnouncement = ''
+      let stats = readPromptPilotStats()
+      let panelVisible = false
+      let panelKey = null
+      let panelLabelKey = ''
+      let aiPendingKey = null
+      let aiRequestController = null
+      let aiRequestTimer = 0
+      const aiCache = new Map()
+      const aiFailures = new Map()
+      const AI_FAILURE_TTL = 60 * 1000
+      const label = function (key, fallback) {
+        try {
+          const value = t(key)
+          return value && value !== key ? value : fallback
+        } catch {
+          return fallback
+        }
+      }
+      const hintFor = function (labelKey) {
+        return labelKey === 'ghost.local.ready' || labelKey === 'ghost.ai.fallback'
+          ? label('ghost.local.hint', '本地生成，不发起模型调用')
+          : label('ghost.ai.hint', 'AI 只为这个上下文调用一次')
+      }
+      const trimAiCache = function () {
+        while (aiCache.size > AI_CACHE_MAX) {
+          let oldestKey = null
+          let oldestAt = Infinity
+          for (const [key, value] of aiCache) {
+            if (value.at < oldestAt) {
+              oldestAt = value.at
+              oldestKey = key
+            }
+          }
+          if (oldestKey === null) break
+          aiCache.delete(oldestKey)
+        }
+      }
+      const hidePanel = function () {
+        panelVisible = false
+        panelKey = null
+        panelLabelKey = ''
+        panel.style.display = 'none'
+        panelTitle.textContent = ''
+        panelBody.textContent = ''
+        panelFoot.textContent = ''
+      }
+      const positionPanel = function (editor) {
+        if (!panelVisible || !editor) return
+        const margin = 8
+        const width = Math.max(220, Math.min(620, window.innerWidth - margin * 2))
+        panel.style.width = width + 'px'
+        const box = editor.getBoundingClientRect()
+        const height = panel.offsetHeight
+        let top = box.top - height - 10
+        if (top < margin) top = box.bottom + 10
+        if (top + height > window.innerHeight - margin) top = Math.max(margin, window.innerHeight - height - margin)
+        const left = Math.max(margin, Math.min(box.left, window.innerWidth - width - margin))
+        panel.style.left = left + 'px'
+        panel.style.top = top + 'px'
+      }
+      const refreshPanel = function (editor, text, labelKey, meta) {
+        if (!panelVisible || !text) return
+        panelTitle.textContent = label(labelKey, labelKey === 'ghost.ai.ready' ? 'AI 提示词建议' : '提示词建议')
+        panelHint.textContent = hintFor(labelKey)
+        panelBody.textContent = text
+        panelLabelKey = labelKey
+        if (candidate) {
+          candidate.full = text
+          candidate.tail = text
+          candidate.ai = Boolean(meta && meta.ai)
+        }
+        positionPanel(editor)
+        announce(text)
+      }
+      const showPanel = function (editor, text, opts) {
+        const options = opts || {}
+        if (!panel.isConnected) document.body.appendChild(panel)
+        if (!element.isConnected) document.body.appendChild(element)
+        panelTitle.textContent = label(options.labelKey || 'ghost.local.ready', '提示词建议')
+        panelHint.textContent = hintFor(options.labelKey || 'ghost.local.ready')
+        panelBody.textContent = text
+        panelFoot.textContent = label('ghost.footer', 'Tab 接受 · Esc 收起')
+        panel.style.display = 'flex'
+        panelVisible = true
+        panelKey = options.key == null ? null : String(options.key)
+        panelLabelKey = options.labelKey || 'ghost.local.ready'
+        positionPanel(editor)
+        element.style.display = 'none'
+        element.textContent = ''
+        candidate = {
+          full: text,
+          tail: text,
+          contextual: true,
+          kind: options.kind || 'next-step',
+          key: options.key == null ? null : String(options.key),
+          ai: Boolean(options.ai),
+        }
+        announce(text)
+      }
+      const markFallback = function (suggestion) {
+        if (!panelVisible || panelLabelKey !== 'ghost.ai.pending') return
+        if (suggestion && panelKey !== String(suggestion.key)) return
+        panelTitle.textContent = label('ghost.ai.fallback', '提示词建议（本地）')
+        panelHint.textContent = hintFor('ghost.ai.fallback')
+        panelLabelKey = 'ghost.ai.fallback'
+      }
+      const requestAi = function (editor, suggestion, context) {
+        const current = store.get()
+        if (current.aiPrompt === false || !suggestion || !suggestion.full) return
+        const key = aiContextKey(context, getLocale(), suggestion.full)
+        const cached = aiCache.get(key)
+        if (cached && Date.now() - cached.at < AI_CACHE_TTL) {
+          refreshPanel(editor, cached.prompt, 'ghost.ai.ready', { ai: true })
+          return
+        }
+        const failedAt = aiFailures.get(key)
+        if (failedAt && Date.now() - failedAt < AI_FAILURE_TTL) {
+          markFallback(suggestion)
+          return
+        }
+        if (aiPendingKey === key) return
+        if (aiRequestController) aiRequestController.abort()
+        const controller = typeof AbortController === 'function' ? new AbortController() : null
+        aiRequestController = controller
+        aiPendingKey = key
+        const recordFailure = function () {
+          aiFailures.set(key, Date.now())
+          while (aiFailures.size > AI_CACHE_MAX) {
+            let oldestKey = null
+            let oldestAt = Infinity
+            for (const [entryKey, at] of aiFailures) {
+              if (at < oldestAt) {
+                oldestAt = at
+                oldestKey = entryKey
+              }
+            }
+            if (oldestKey === null) break
+            aiFailures.delete(oldestKey)
+          }
+        }
+        if (aiRequestTimer) window.clearTimeout(aiRequestTimer)
+        aiRequestTimer = window.setTimeout(function () {
+          if (controller) controller.abort()
+        }, 20000)
+        requestAiPrompt(context, getLocale(), suggestion.full, controller ? controller.signal : undefined)
+          .then(function (prompt) {
+            if (!prompt) {
+              recordFailure()
+              if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+              markFallback(suggestion)
+              return
+            }
+            aiFailures.delete(key)
+            aiCache.set(key, { prompt: prompt, at: Date.now() })
+            trimAiCache()
+            if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+            if (editor !== composerEditor() || document.activeElement !== editor) return
+            if (String(editor.textContent || '').trim() !== '') return
+            refreshPanel(editor, prompt, 'ghost.ai.ready', { ai: true })
+          })
+          .catch(function () {
+            recordFailure()
+            if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+            markFallback(suggestion)
+          })
+          .finally(function () {
+            if (aiRequestTimer) {
+              window.clearTimeout(aiRequestTimer)
+              aiRequestTimer = 0
+            }
+            if (aiRequestController === controller) aiRequestController = null
+            if (aiPendingKey === key) aiPendingKey = null
+          })
+      }
+
+      const restorePlaceholder = function () {
+        if (!placeholderActive) return
+        const editor = emptyEditor
+        const value = placeholderValue
+        placeholderActive = false
+        emptyEditor = null
+        placeholderValue = undefined
+        if (!editor) return
+        try {
+          editor.classList.remove('ccm-ghost-placeholder')
+          // Only undo the attribute value this entry blanked; a Host re-render
+          // may already have installed a newer placeholder string.
+          if (value !== undefined && editor.getAttribute('data-placeholder') === '') {
+            if (value === null) editor.removeAttribute('data-placeholder')
+            else editor.setAttribute('data-placeholder', value)
+          }
+        } catch {
+          /* the Host replaced its editor */
+        }
+      }
+
+      const hide = function () {
+        candidate = null
+        element.style.display = 'none'
+        element.textContent = ''
+        live.textContent = ''
+        lastAnnouncement = ''
+        hidePanel()
+        restorePlaceholder()
+      }
+
+      const hidePlaceholder = function (editor) {
+        if (placeholderActive) {
+          try {
+            if (editor.getAttribute('data-placeholder') !== '') editor.setAttribute('data-placeholder', '')
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+        try {
+          placeholderValue = editor.getAttribute('data-placeholder')
+          emptyEditor = editor
+          placeholderActive = true
+          editor.classList.add('ccm-ghost-placeholder')
+          if (placeholderValue !== null) editor.setAttribute('data-placeholder', '')
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const announce = function (text) {
+        if (!text) return
+        const prefix = String(getLocale() || '').toLowerCase().indexOf('zh') === 0 ? '输入建议：' : 'Suggestion: '
+        const message = prefix + text
+        if (message === lastAnnouncement) return
+        lastAnnouncement = message
+        live.textContent = message
+      }
+
+      const showGhost = function (editor, displayText, fullText, rect, contextual, kind, key) {
+        hidePanel()
+        const style = getComputedStyle(editor)
+        const lineHeight = parseFloat(style.lineHeight) || rect.height || 20
+        const editorBox = editor.getBoundingClientRect()
+        element.textContent = displayText
+        element.style.display = 'inline-block'
+        element.style.left = rect.left + 'px'
+        element.style.top = (rect.top + Math.max(0, (rect.height - lineHeight) / 2)) + 'px'
+        element.style.height = lineHeight + 'px'
+        element.style.lineHeight = lineHeight + 'px'
+        element.style.maxWidth = Math.max(80, editorBox.right - rect.left - 8) + 'px'
+        element.style.font = style.font
+        element.style.letterSpacing = style.letterSpacing
+        candidate = {
+          full: fullText,
+          tail: displayText,
+          contextual: Boolean(contextual),
+          kind: kind || 'prefix',
+          key: key == null ? null : String(key),
+        }
+        if (contextual) announce(fullText)
+      }
+
+      const accept = function () {
+        if (!candidate) return
+        const accepted = candidate
+        if (accepted.contextual && accepted.kind) {
+          stats = recordPilotEvent(stats, accepted.kind, 'accepted', Date.now(), accepted.key || '')
+          savePromptPilotStats(stats)
+        }
+        hide()
+        try {
+          if (typeof runtime.fillDraft === 'function') {
+            runtime.fillDraft(accepted.full)
+          } else if (props.inputActions && typeof props.inputActions.setDraft === 'function') {
+            props.inputActions.setDraft(accepted.full)
+          }
+        } catch {
+          /* the Host refused this programmatic write */
+        }
+      }
+
+      const dismiss = function () {
+        if (!candidate) return
+        const dismissed = candidate
+        if (dismissed.contextual && dismissed.kind) {
+          stats = recordPilotEvent(stats, dismissed.kind, 'dismissed', Date.now(), dismissed.key || '')
+          savePromptPilotStats(stats)
+        }
+        hide()
+      }
+
+      const update = function () {
+        frame = 0
+        if (disposed) return
+        try {
+          const current = store.get()
+          if (!current.enabled || current.ghost === false) return hide()
+          const editor = composerEditor()
+          const active = document.activeElement
+          if (!editor || !(active === editor || (active && editor.contains(active)))) {
+            focusAt = 0
+            return hide()
+          }
+          if (!focusAt) focusAt = Date.now()
+          const palette = document.querySelector('.ccm-palette')
+          if (isElementVisible(palette)) return hide()
+          if (hostMenuOpen()) return hide()
+          const hostModal = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).find(function (node) {
+            return !node.classList.contains('ccm-palette') && !node.classList.contains('ccm-shortcuts') && isElementVisible(node)
+          })
+          if (hostModal) return hide()
+          const draftText = String(editor.textContent || '')
+          const legacy = chatRef.current && chatRef.current.legacy
+          const nodes = legacy && Array.isArray(legacy.nodes) ? legacy.nodes : []
+          const prompts = collectPromptHistory(nodes, 50)
+          if (!draftText.trim()) {
+            if (current.ghostContext === false) return hide()
+            if (runtime.running) return hide()
+            // Give the composer a short focus dwell before replacing its
+            // placeholder, so a passing click does not flash a suggestion.
+            const dwell = Date.now() - focusAt
+            if (dwell < 350) {
+              hide()
+              scheduleDwell(350 - dwell)
+              return
+            }
+            const context = promptContextFromChat(chatRef.current)
+            const sessionTitle = sessionTitleFromDocument()
+            const promptInput = {
+              assistantText: context.assistantText,
+              toolText: context.toolText,
+              assistantFresh: context.assistantFresh,
+              toolFresh: context.toolFresh,
+              lastUserPrompt: context.lastUserPrompt,
+              sessionTitle: sessionTitle,
+              sessionId: props.sessionId,
+              running: runtime.running,
+              locale: getLocale(),
+              stats: stats,
+            }
+            const suggestion = buildPromptDraft(promptInput)
+            if (!suggestion || !suggestion.full) return hide()
+            if (suggestionSuppressed(stats, suggestion.key)) return hide()
+            const aiKey = aiContextKey(
+              Object.assign({}, context, { sessionTitle: sessionTitle }),
+              getLocale(),
+              suggestion.full,
+            )
+            const cached = current.aiPrompt === false ? null : aiCache.get(aiKey)
+            const cachedPrompt = cached && Date.now() - cached.at < AI_CACHE_TTL ? cached.prompt : ''
+            if (panelVisible && panelKey === String(suggestion.key)) {
+              if (!panel.isConnected) document.body.appendChild(panel)
+              if (!element.isConnected) document.body.appendChild(element)
+              positionPanel(editor)
+              return
+            }
+            hidePlaceholder(editor)
+            showPanel(editor, cachedPrompt || suggestion.full, {
+              key: suggestion.key,
+              kind: suggestion.kind,
+              labelKey: cachedPrompt ? 'ghost.ai.ready' : current.aiPrompt === false ? 'ghost.local.ready' : 'ghost.ai.pending',
+              ai: Boolean(cachedPrompt),
+            })
+            if (!cachedPrompt && current.aiPrompt !== false) {
+              requestAi(editor, suggestion, Object.assign({}, context, { sessionTitle: sessionTitle }))
+            }
+            if (lastShownKey !== String(suggestion.key)) {
+              lastShownKey = String(suggestion.key)
+              stats = recordPilotEvent(stats, suggestion.kind, 'shown', Date.now(), lastShownKey)
+              savePromptPilotStats(stats)
+            }
+            return
+          }
+          restorePlaceholder()
+          const match = suggestPromptCompletion(draftText, prompts.length > 0 ? prompts : runtime.promptHistory, getLocale())
+          if (!match || !match.tail) return hide()
+          const caret = caretAtComposerEnd(editor)
+          if (!caret) return hide()
+          showGhost(editor, match.tail, match.full, caret, false, 'prefix', null)
+        } catch (error) {
+          // A malformed Chat snapshot or a Host re-render must never leave the
+          // suggestion pipeline permanently stuck. Hide and try again on the
+          // next heartbeat.
+          hide()
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[dsh-claude-mode] prompt suggestion update failed', error)
+          }
+        }
+      }
+
+      const schedule = function () {
+        if (disposed || frame) return
+        frame = window.requestAnimationFrame(update)
+      }
+      const scheduleDwell = function (delay) {
+        if (disposed || dwellTimer) return
+        dwellTimer = window.setTimeout(function () {
+          dwellTimer = 0
+          schedule()
+        }, Math.max(0, delay))
+      }
+      const clearDwell = function () {
+        if (!dwellTimer) return
+        window.clearTimeout(dwellTimer)
+        dwellTimer = 0
+      }
+      refreshRef.current = schedule
+
+      const onFocusIn = function (event) {
+        const editor = composerEditor()
+        if (editor && (event.target === editor || (event.target && editor.contains(event.target)))) {
+          focusAt = Date.now()
+        }
+        schedule()
+      }
+      const onFocusOut = function (event) {
+        const editor = composerEditor()
+        if (!editor || event.target === editor) {
+          focusAt = 0
+          clearDwell()
+        }
+        schedule()
+      }
+      const onKeyDown = function (event) {
+        if (disposed || !candidate) return
+        if (event.defaultPrevented || event.isComposing) return
+        if (!store.get().enabled || store.get().ghost === false) return
+        if (event.key === 'Escape') {
+          if (!candidate.contextual || runtime.running) return
+          if (hostMenuOpen()) return
+          event.preventDefault()
+          event.stopPropagation()
+          dismiss()
+          return
+        }
+        if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return
+        if (hostMenuOpen()) return
+        event.preventDefault()
+        event.stopPropagation()
+        accept()
+      }
+
+      document.addEventListener('input', schedule, true)
+      document.addEventListener('focusin', onFocusIn, true)
+      document.addEventListener('focusout', onFocusOut, true)
+      document.addEventListener('selectionchange', schedule, true)
+      document.addEventListener('pointerdown', schedule, true)
+      document.addEventListener('keyup', schedule, true)
+      document.addEventListener('visibilitychange', schedule, true)
+      window.addEventListener('focus', schedule)
+      window.addEventListener('scroll', schedule, true)
+      window.addEventListener('resize', schedule)
+      window.addEventListener('keydown', onKeyDown, true)
+      // Host menus, palettes, and React re-renders can swallow the one event
+      // that would have reopened the card. A cheap heartbeat keeps the empty
+      // composer suggestion observable without depending on a specific Host
+      // renderer event order.
+      heartbeat = window.setInterval(schedule, 350)
+      schedule()
+
+      return function () {
+        disposed = true
+        if (refreshRef.current === schedule) refreshRef.current = null
+        clearDwell()
+        if (heartbeat) {
+          window.clearInterval(heartbeat)
+          heartbeat = 0
+        }
+        if (aiRequestTimer) {
+          window.clearTimeout(aiRequestTimer)
+          aiRequestTimer = 0
+        }
+        if (aiRequestController) {
+          aiRequestController.abort()
+          aiRequestController = null
+        }
+        window.cancelAnimationFrame(frame)
+        document.removeEventListener('input', schedule, true)
+        document.removeEventListener('focusin', onFocusIn, true)
+        document.removeEventListener('focusout', onFocusOut, true)
+        document.removeEventListener('selectionchange', schedule, true)
+        document.removeEventListener('pointerdown', schedule, true)
+        document.removeEventListener('keyup', schedule, true)
+        document.removeEventListener('visibilitychange', schedule, true)
+        window.removeEventListener('focus', schedule)
+        window.removeEventListener('scroll', schedule, true)
+        window.removeEventListener('resize', schedule)
+        window.removeEventListener('keydown', onKeyDown, true)
+        hide()
+        element.remove()
+        live.remove()
+        panel.remove()
+      }
+    }, [settings.enabled, settings.ghost, settings.ghostContext, settings.aiPrompt, props.inputActions])
+
+    return null
+  }
+}
 function shortenText(text, max) {
   const flat = String(text == null ? '' : text).replace(/\s+/g, ' ').trim()
   if (!flat) return ''
@@ -2714,6 +4233,46 @@ function createHeaderButton(ctx, store, t) {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Sidebar pinned-chat shortcut                                            */
+/* ---------------------------------------------------------------------- */
+
+/** Pin glyph for the sidebar footer shortcut. */
+function PinIcon() {
+  return React.createElement('svg', {
+    className: 'ccm-action-icon',
+    viewBox: '0 0 16 16',
+    width: 16,
+    height: 16,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.4,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': 'true',
+  }, [
+    React.createElement('path', { key: 'p', d: 'M9.1 2.1a3.4 3.4 0 0 0-3.4 3.4c0 1.2.6 2.3 1.5 3v3.2L9.1 14l1.9-2.3V8.5a3.6 3.6 0 0 0 1.5-3A3.4 3.4 0 0 0 9.1 2.1Z' }),
+    React.createElement('path', { key: 'l', d: 'M9.1 8.5v2.2' }),
+  ])
+}
+
+/** Sidebar footer button that opens the palette at its pinned-chat section. */
+function createPinnedButton(ctx, store, t) {
+  return function PinnedButton() {
+    const settings = useSettings(store)
+    if (!settings.enabled) return null
+    const label = t('action.pinned.label')
+    return React.createElement('button', {
+      type: 'button',
+      className: 'ccm-iconbtn ccm-pinned-btn',
+      title: label,
+      'aria-label': label,
+      'data-claude-mode': '',
+      onClick: openPalette,
+    }, React.createElement(PinIcon))
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Assistant read-aloud action                                            */
 /* ---------------------------------------------------------------------- */
 
@@ -3012,6 +4571,33 @@ function createPalette(ctx, store, t, buildActions) {
     }, [close])
 
     const historyVersion = Number(runtime.historyVersion) || 0
+    const pinnedItems = React.useMemo(function () {
+      if (!open) return []
+      try {
+        const workspaces = ctx.get('workspaces')
+        const sessions = ctx.get('sessions')
+        if (!workspaces || !workspaces.list || typeof workspaces.list.getSnapshot !== 'function') return []
+        if (!sessions || !sessions.list || typeof sessions.list.getSnapshot !== 'function') return []
+        return mapPinnedSessions(
+          workspaces.list.getSnapshot(),
+          sessions.list.getSnapshot(),
+          8,
+        ).map(function (row) {
+          return {
+            id: 'pinned:' + row.sessionId,
+            section: 'pinned',
+            title: shortenText(row.title, 64),
+            detail: row.workspaceTitle || t('palette.section.pinned'),
+            keywords: row.title + ' 置顶 pinned',
+            run: function () {
+              openSessionById(ctx, row.sessionId)
+            },
+          }
+        })
+      } catch {
+        return []
+      }
+    }, [open, t, historyVersion])
     const allItems = React.useMemo(function () {
       const base = buildActions(settings, t)
       const history = Array.isArray(runtime.promptHistory) ? runtime.promptHistory.slice(0, 12) : []
@@ -3049,9 +4635,10 @@ function createPalette(ctx, store, t, buildActions) {
     }, [sessionResults, t])
     const items = React.useMemo(function () {
       const ranked = rankItems(allItems, query)
-      if (!query.trim()) return ranked
-      return ranked.concat(searchItems)
-    }, [allItems, query, searchItems])
+      const visiblePinned = query.trim() ? rankItems(pinnedItems, query) : pinnedItems
+      if (!query.trim()) return visiblePinned.concat(ranked)
+      return visiblePinned.concat(ranked).concat(searchItems)
+    }, [allItems, query, searchItems, pinnedItems])
     const itemsRef = React.useRef(items)
     itemsRef.current = items
 
@@ -3263,7 +4850,7 @@ function fuzzyScore(haystack, needle) {
 
 /** Group ranked actions by section, preserving section order. */
 function groupItems(items) {
-  const order = ['appearance', 'behavior', 'session', 'search', 'history']
+  const order = ['pinned', 'appearance', 'behavior', 'session', 'search', 'history']
   const groups = new Map()
   for (const item of items) {
     const section = item.section || 'session'
@@ -3297,6 +4884,8 @@ function shortcutGroups(t) {
         { keys: ['↵'], label: label('shortcuts.send') },
         { keys: ['⇧', '↵'], label: label('shortcuts.newline') },
         { keys: ['↑', '↓'], label: label('shortcuts.history') },
+        { keys: ['Tab'], label: label('shortcuts.ghost') },
+        { keys: ['Esc'], label: label('shortcuts.ghostDismiss') },
       ],
     },
     {
@@ -3585,12 +5174,22 @@ function createSettingsSection(ctx, store, t) {
               onClick: function () { playCompletionChime() },
             }, t('settings.sound.preview')),
           ])),
+        row('ghost', t('settings.ghost.title'), t('settings.ghost.hint'),
+          toggle('ghost-switch', settings.ghost, function (next) { store.set({ ghost: next }) }, t('settings.ghost.title'))),
+        row('ghost-context', t('settings.ghostContext.title'), t('settings.ghostContext.hint'),
+          toggle('ghost-context-switch', settings.ghostContext, function (next) { store.set({ ghostContext: next }) }, t('settings.ghostContext.title'))),
+        row('ai-prompt', t('settings.aiPrompt.title'), t('settings.aiPrompt.hint'),
+          toggle('ai-prompt-switch', settings.aiPrompt, function (next) { store.set({ aiPrompt: next }) }, t('settings.aiPrompt.title'))),
       ]),
       React.createElement('div', { key: 'shortcuts', className: 'ccm-settings-group' }, [
         row('sc-palette', t('settings.shortcut.palette'), t('settings.shortcut.hint'),
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌃K'))),
         row('sc-new', t('settings.shortcut.newSession'), null,
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌥N'))),
+        row('sc-ghost', t('shortcuts.ghost'), null,
+          React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Tab'))),
+        row('sc-ghost-dismiss', t('shortcuts.ghostDismiss'), null,
+          React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Esc'))),
         row('sc-interrupt', t('settings.shortcut.interrupt'), null,
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Esc'))),
       ]),
@@ -3911,6 +5510,28 @@ function applyClaudeMode(ctx) {
       },
     })
     actions.push({
+      id: 'ghost',
+      section: 'behavior',
+      title: settings.ghost ? tr('action.ghost.on') : tr('action.ghost.off'),
+      detail: tr('action.ghost.detail'),
+      keywords: 'ghost completion suggest autocomplete tab 提示词 补全 自动完成 Tab',
+      state: settings.ghost ? tr('palette.toggle.on') : tr('palette.toggle.off'),
+      run: function () {
+        store.set({ ghost: !store.get().ghost })
+      },
+    })
+    actions.push({
+      id: 'ghost-context',
+      section: 'behavior',
+      title: settings.ghostContext ? tr('action.ghostContext.on') : tr('action.ghostContext.off'),
+      detail: tr('action.ghostContext.detail'),
+      keywords: 'context next prompt empty composer suggestion 上下文 推荐 下一句 空输入框',
+      state: settings.ghostContext ? tr('palette.toggle.on') : tr('palette.toggle.off'),
+      run: function () {
+        store.set({ ghostContext: !store.get().ghostContext })
+      },
+    })
+    actions.push({
       id: 'sidebar',
       section: 'behavior',
       title: tr('action.sidebar.toggle'),
@@ -3971,6 +5592,8 @@ function applyClaudeMode(ctx) {
   const RunBar = createRunBar(ctx, store, t, getLocale)
   const HeaderButton = createHeaderButton(ctx, store, t)
   const ReadAloud = createReadAloud(ctx, store, t, getLocale)
+  const PinnedButton = createPinnedButton(ctx, store, t)
+  const GhostSuggestion = createGhostSuggestion(ctx, store, t, getLocale)
   const TurnFooter = createTurnFooter(ctx, store, t, getLocale)
   const Palette = createPalette(ctx, store, t, buildActions)
   const ShortcutsSheet = createShortcuts(ctx, store, t)
@@ -4008,6 +5631,15 @@ function applyClaudeMode(ctx) {
     }, RunBar)
   })
 
+  registerSlot('conversation.input.overlay', function () {
+    return ctx.slots.register({
+      name: 'conversation.input.overlay',
+      id: 'claude-mode.ghost',
+      order: 5,
+      locale: NS,
+    }, GhostSuggestion)
+  })
+
   registerSlot('conversation.session.header.utilities', function () {
     return ctx.slots.register({
       name: 'conversation.session.header.utilities',
@@ -4032,6 +5664,21 @@ function applyClaudeMode(ctx) {
       },
       locale: NS,
     }, ReadAloud)
+  })
+
+  /* Sidebar footer pin shortcut: opens the palette, whose first section lists
+     the Host's registry-global pinned sessions. Older Hosts without the footer
+     action slot skip this registration. */
+  registerSlot('sidebar.footer.action', function () {
+    return ctx.slots.register({
+      name: 'sidebar.footer.action',
+      id: 'claude-mode.pinned',
+      order: 10,
+      label: function () {
+        return t('action.pinned.label')
+      },
+      locale: NS,
+    }, PinnedButton)
   })
 
   /* Compatibility: newer Hosts declare `conversation.chat.turnTail` as a list

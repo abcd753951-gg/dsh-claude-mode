@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Claude mode",
-    "description": "A Claude Code-style interaction layer: neutral greys with terracotta, a pulsing status star, prompt-history recall, a shortcut sheet, collapsible sidebar and plugin icons, a command palette with chat search, read-aloud and completion sounds, and turn-completion footers."
+    "description": "A Claude Code-style Prompt Pilot: an empty composer shows a complete prompt card with goal, context, constraints and acceptance checks, then the current model refines it once per context with caching; deleting an accepted draft re-offers it, and a complete local draft remains when the model is unavailable."
   }
 }

@@ -351,6 +351,145 @@ export const STYLES = `
 .ccm-palette-foot-item { display: inline-flex; align-items: center; gap: 5px; }
 .ccm-palette-foot-status { margin-left: auto; color: var(--dsw-alias-brand-primary); }
 
+/* Inline prompt completion ghost appended to document.body. Fixed positioning
+   and viewport coordinates come from the component; only paint lives here. */
+.ccm-ghost {
+  position: fixed;
+  z-index: 2200;
+  display: none;
+  overflow: hidden;
+  white-space: pre;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
+  color: var(--dsw-alias-label-secondary, #6b6b6b);
+  opacity: 0.96;
+  font-family: var(--dsh-font-family, inherit);
+}
+
+/* Screen-reader announcement for a context-aware suggestion. */
+.ccm-ghost-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Empty-composer suggestions replace the Host placeholder with the ghost
+   sentence. Current hosts render that placeholder as a sibling node; the
+   pseudo-element and attribute rules cover older renderers. */
+[data-composer-input="true"].ccm-ghost-placeholder ~ [data-composer-placeholder="true"] {
+  visibility: hidden !important;
+}
+
+[data-composer-input="true"].ccm-ghost-placeholder::before,
+[data-composer-input="true"].ccm-ghost-placeholder::after {
+  content: none !important;
+}
+
+@media (prefers-contrast: more) {
+  .ccm-ghost {
+    color: var(--dsw-alias-label-secondary, #555);
+    opacity: 1;
+  }
+}
+
+/* Complete, multi-line prompt suggestion. Long prompts must stay readable:
+   the body wraps, scrolls inside a capped card, and keeps the composer focused
+   because pointerdown is cancelled by the component. */
+.ccm-ai-preview {
+  position: fixed;
+  z-index: 2400;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  max-height: min(360px, 44vh);
+  padding: 12px 14px 10px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-lg, 10px);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: var(--dsw-alias-label-primary);
+  pointer-events: auto;
+  user-select: text;
+  font-family: var(--dsh-font-family, inherit);
+}
+
+.ccm-ai-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ccm-ai-preview-title {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--dsw-alias-brand-primary);
+  letter-spacing: 0.01em;
+}
+
+.ccm-ai-preview-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ccm-ai-preview-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 3px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  line-height: 23px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ccm-ai-preview-foot {
+  flex: 0 0 auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+@media (prefers-contrast: more) {
+  .ccm-ai-preview {
+    border-color: var(--dsw-alias-label-secondary);
+  }
+  .ccm-ai-preview-body {
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+@media (max-width: 560px) {
+  .ccm-ai-preview {
+    max-height: min(320px, 46vh);
+    padding: 10px 12px 9px;
+  }
+  .ccm-ai-preview-body {
+    font-size: 15px;
+    line-height: 22px;
+  }
+}
+
+
 /* ------------------------------------------------------------------ */
 /* Turn footer                                                         */
 /* ------------------------------------------------------------------ */

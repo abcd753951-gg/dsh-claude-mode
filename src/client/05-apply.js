@@ -293,6 +293,28 @@ export function applyClaudeMode(ctx) {
       },
     })
     actions.push({
+      id: 'ghost',
+      section: 'behavior',
+      title: settings.ghost ? tr('action.ghost.on') : tr('action.ghost.off'),
+      detail: tr('action.ghost.detail'),
+      keywords: 'ghost completion suggest autocomplete tab 提示词 补全 自动完成 Tab',
+      state: settings.ghost ? tr('palette.toggle.on') : tr('palette.toggle.off'),
+      run: function () {
+        store.set({ ghost: !store.get().ghost })
+      },
+    })
+    actions.push({
+      id: 'ghost-context',
+      section: 'behavior',
+      title: settings.ghostContext ? tr('action.ghostContext.on') : tr('action.ghostContext.off'),
+      detail: tr('action.ghostContext.detail'),
+      keywords: 'context next prompt empty composer suggestion 上下文 推荐 下一句 空输入框',
+      state: settings.ghostContext ? tr('palette.toggle.on') : tr('palette.toggle.off'),
+      run: function () {
+        store.set({ ghostContext: !store.get().ghostContext })
+      },
+    })
+    actions.push({
       id: 'sidebar',
       section: 'behavior',
       title: tr('action.sidebar.toggle'),
@@ -353,6 +375,8 @@ export function applyClaudeMode(ctx) {
   const RunBar = createRunBar(ctx, store, t, getLocale)
   const HeaderButton = createHeaderButton(ctx, store, t)
   const ReadAloud = createReadAloud(ctx, store, t, getLocale)
+  const PinnedButton = createPinnedButton(ctx, store, t)
+  const GhostSuggestion = createGhostSuggestion(ctx, store, t, getLocale)
   const TurnFooter = createTurnFooter(ctx, store, t, getLocale)
   const Palette = createPalette(ctx, store, t, buildActions)
   const ShortcutsSheet = createShortcuts(ctx, store, t)
@@ -390,6 +414,15 @@ export function applyClaudeMode(ctx) {
     }, RunBar)
   })
 
+  registerSlot('conversation.input.overlay', function () {
+    return ctx.slots.register({
+      name: 'conversation.input.overlay',
+      id: 'claude-mode.ghost',
+      order: 5,
+      locale: NS,
+    }, GhostSuggestion)
+  })
+
   registerSlot('conversation.session.header.utilities', function () {
     return ctx.slots.register({
       name: 'conversation.session.header.utilities',
@@ -414,6 +447,21 @@ export function applyClaudeMode(ctx) {
       },
       locale: NS,
     }, ReadAloud)
+  })
+
+  /* Sidebar footer pin shortcut: opens the palette, whose first section lists
+     the Host's registry-global pinned sessions. Older Hosts without the footer
+     action slot skip this registration. */
+  registerSlot('sidebar.footer.action', function () {
+    return ctx.slots.register({
+      name: 'sidebar.footer.action',
+      id: 'claude-mode.pinned',
+      order: 10,
+      label: function () {
+        return t('action.pinned.label')
+      },
+      locale: NS,
+    }, PinnedButton)
   })
 
   /* Compatibility: newer Hosts declare `conversation.chat.turnTail` as a list

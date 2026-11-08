@@ -8,10 +8,10 @@
  * the duration.
  */
 
-import { assistantTextForMessage, collectPromptHistory, completionWordFor, format, formatDuration, formatElapsed, mapSessionSearchResults, openPalette, openShortcuts, pickSpinnerVerb, playCompletionChime, runtime, SPINNER_REST_FRAME, spinnerFrame, splitSpeechText, stepPromptHistory, subscribePalette, subscribeShortcuts } from './02-state.js'
+import { assistantTextForMessage, buildPromptDraft, collectPromptHistory, completionWordFor, format, formatDuration, formatElapsed, hash32, mapPinnedSessions, mapSessionSearchResults, normalizePilotStats, openPalette, openShortcuts, PILOT_STATS_KEY, pickSpinnerVerb, playCompletionChime, promptContextFromChat, recordPilotEvent, runtime, SPINNER_REST_FRAME, spinnerFrame, splitSpeechText, stepPromptHistory, suggestPromptCompletion, suggestionSuppressed, subscribePalette, subscribeShortcuts } from './02-state.js'
 
 /** Rendered plugin version (also shown in the Settings about card). */
-export const VERSION = '0.5.0'
+export const VERSION = '1.0.0'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -34,13 +34,22 @@ function composerText(element) {
   }
 }
 
+/** Whether a DOM node currently paints; hidden React leftovers should not block. */
+function isElementVisible(node) {
+  try {
+    return Boolean(node && (node.offsetParent !== null || (node.getClientRects && node.getClientRects().length > 0)))
+  } catch {
+    return false
+  }
+}
+
 /** Whether a host popup (slash menu, autocomplete) currently owns the arrows. */
 function hostMenuOpen() {
   try {
     const nodes = document.querySelectorAll('[role="listbox"], [role="menu"]')
     for (const node of nodes) {
       if (node.closest && node.closest('.ccm-palette, .ccm-shortcuts')) continue
-      if (node.offsetParent !== null) return true
+      if (isElementVisible(node)) return true
     }
   } catch {
     /* ignore */
@@ -58,7 +67,731 @@ function focusComposer() {
   }
 }
 
-/** Trim one history row to a single short palette title. */
+/** Locate the host's resident composer editor. */
+function composerEditor() {
+  try {
+    const editor = document.querySelector('[contenteditable="true"][data-composer-input="true"]')
+    if (editor && editor.offsetParent !== null && !(editor.closest && editor.closest('[role="dialog"]'))) return editor
+    const fallback = document.querySelector('[contenteditable="true"]')
+    if (fallback && !(fallback.closest && fallback.closest('[role="dialog"]'))) return fallback
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+/** Caret rectangle only while the caret sits at the end of the composer. */
+function caretAtComposerEnd(editor) {
+  try {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return null
+    const range = selection.getRangeAt(0)
+    if (!editor.contains(range.startContainer)) return null
+    const tail = document.createRange()
+    tail.setStart(range.startContainer, range.startOffset)
+    tail.setEnd(editor, editor.childNodes.length)
+    if (tail.toString().replace(/\s+/g, '') !== '') return null
+    const rects = range.getClientRects()
+    let rect = rects && rects.length > 0 ? rects[rects.length - 1] : range.getBoundingClientRect()
+    if (!rect || (!rect.width && !rect.height)) {
+      const box = editor.getBoundingClientRect()
+      if (!box.width || !box.height) return null
+      const lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 20
+      rect = { left: box.left + 8, top: box.top + 8, width: 0, height: lineHeight }
+    }
+    return rect
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Rect at the start of an empty composer, used for a full-sentence suggestion.
+ * An empty contenteditable has no useful selection rect in Chromium, so the
+ * editor's own padding box is the reliable origin.
+ */
+function composerStartRect(editor) {
+  try {
+    const box = editor.getBoundingClientRect()
+    const style = getComputedStyle(editor)
+    const lineHeight = parseFloat(style.lineHeight) || 20
+    return {
+      left: box.left + (parseFloat(style.paddingLeft) || 8),
+      top: box.top + (parseFloat(style.paddingTop) || 8),
+      height: lineHeight,
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Current Session title from the Host document title (empty for a blank one). */
+function sessionTitleFromDocument() {
+  try {
+    const raw = String(document.title || '')
+      .replace(/\s*[—–-]\s*DeepSeek Harness\s*$/i, '')
+      .trim()
+    if (!raw || /^(DeepSeek Harness|新会话|未命名|New session|Untitled)$/i.test(raw)) return ''
+    return raw
+  } catch {
+    return ''
+  }
+}
+
+/** Read aggregate prompt-pilot feedback; no prompt text is persisted. */
+function readPromptPilotStats() {
+  try {
+    const raw = window.localStorage.getItem(PILOT_STATS_KEY)
+    return normalizePilotStats(raw ? JSON.parse(raw) : null)
+  } catch {
+    return normalizePilotStats(null)
+  }
+}
+
+/** Persist aggregate prompt-pilot feedback, swallowing private-mode errors. */
+function savePromptPilotStats(stats) {
+  try {
+    window.localStorage.setItem(PILOT_STATS_KEY, JSON.stringify(normalizePilotStats(stats)))
+  } catch {
+    /* storage can be unavailable in private or embedded contexts */
+  }
+}
+
+/**
+ * Optional AI pass for the empty composer. The Host row exposes one same-origin
+ * route; the client only calls it when the local, detailed draft is already on
+ * screen, and caches the result per context so a delete-after-accept or a
+ * second focus never pays for the same prompt twice.
+ */
+const AI_PROMPT_ROUTE = '/dsh-claude-mode/ai-prompt'
+const AI_CACHE_TTL = 10 * 60 * 1000
+const AI_CACHE_MAX = 8
+const AI_PROMPT_MAX = 1400
+
+function aiContextKey(context, locale, localPrompt) {
+  return hash32([
+    String(locale || ''),
+    String(context && context.assistantText || '').slice(-4000),
+    String(context && context.toolText || '').slice(-1200),
+    String(context && context.lastUserPrompt || ''),
+    String(context && context.sessionTitle || ''),
+    String(localPrompt || ''),
+  ].join('|'))
+}
+
+function requestAiPrompt(context, locale, localPrompt, signal) {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+    return Promise.reject(new Error('fetch unavailable'))
+  }
+  const body = {
+    locale: String(locale || 'zh-CN'),
+    context: {
+      sessionTitle: String(context && context.sessionTitle || '').slice(0, 160),
+      lastUserPrompt: String(context && context.lastUserPrompt || '').slice(-1600),
+      assistantText: String(context && context.assistantText || '').slice(-6000),
+      toolText: String(context && context.toolText || '').slice(-1600),
+      localPrompt: String(localPrompt || '').slice(0, 1600),
+      assistantFresh: !context || context.assistantFresh !== false,
+    },
+  }
+  return window.fetch(AI_PROMPT_ROUTE, {
+    method: 'POST',
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: {
+      'content-type': 'application/json',
+      'x-dsh-claude-mode': '1',
+    },
+    body: JSON.stringify(body),
+    signal,
+  }).then(function (response) {
+    if (!response.ok) throw new Error('AI prompt HTTP ' + response.status)
+    return response.json()
+  }).then(function (payload) {
+    if (!payload || payload.ok !== true) throw new Error(String(payload && payload.reason || 'AI prompt failed'))
+    const text = String(payload.prompt || '').trim()
+    return text ? text.slice(0, AI_PROMPT_MAX) : ''
+  })
+}
+
+/**
+ * Inline prompt completion for the resident composer.
+ *
+ * The editor stays host-owned: this entry appends one fixed, pointer-events-none
+ * ghost span to the document body (the slot explicitly requires body-level fixed
+ * overlays), measures the caret only when it is at the end of the draft, and
+ * accepts with Tab through the composer's own draft action. The ghost is light
+ * secondary text; accepted text is ordinary composer text.
+ */
+export function createGhostSuggestion(ctx, store, t, getLocale) {
+  return function GhostSuggestion(props) {
+    const settings = useSettings(store)
+    const useInput = typeof props.useInput === 'function' ? props.useInput : function () { return undefined }
+    // Subscribe to the draft so the component re-renders with the host input
+    // state; the DOM listeners below handle caret moves between renders.
+    const inputDraft = useInput(function (state) {
+      return state && typeof state.draft === 'string' ? state.draft : ''
+    })
+    // Context source for the empty-composer suggestion: the same Chat snapshot
+    // the run bar uses, read here so a finished reply can refresh the ghost
+    // without requiring another keystroke.
+    const useChat = typeof props.useChat === 'function' ? props.useChat : useNoChat
+    const chatSnapshot = useChat(selectChatSnapshot)
+    const chatRef = React.useRef(chatSnapshot)
+    const refreshRef = React.useRef(null)
+    chatRef.current = chatSnapshot
+    React.useEffect(function () {
+      if (refreshRef.current) refreshRef.current()
+    }, [chatSnapshot, inputDraft])
+
+    React.useEffect(function () {
+      if (!settings.enabled || settings.ghost === false) return undefined
+      const element = document.createElement('span')
+      element.className = 'ccm-ghost'
+      element.setAttribute('aria-hidden', 'true')
+      element.setAttribute('data-claude-mode', '')
+      element.style.display = 'none'
+      document.body.appendChild(element)
+      const live = document.createElement('span')
+      live.className = 'ccm-ghost-live'
+      live.setAttribute('data-claude-mode', '')
+      live.setAttribute('role', 'status')
+      live.setAttribute('aria-live', 'polite')
+      live.setAttribute('aria-atomic', 'true')
+      document.body.appendChild(live)
+
+      const panel = document.createElement('div')
+      panel.className = 'ccm-ai-preview'
+      panel.setAttribute('data-claude-mode', '')
+      panel.setAttribute('role', 'note')
+      panel.style.display = 'none'
+      const panelHead = document.createElement('div')
+      panelHead.className = 'ccm-ai-preview-head'
+      const panelTitle = document.createElement('span')
+      panelTitle.className = 'ccm-ai-preview-title'
+      const panelHint = document.createElement('span')
+      panelHint.className = 'ccm-ai-preview-hint'
+      panelHead.appendChild(panelTitle)
+      panelHead.appendChild(panelHint)
+      const panelBody = document.createElement('div')
+      panelBody.className = 'ccm-ai-preview-body'
+      const panelFoot = document.createElement('div')
+      panelFoot.className = 'ccm-ai-preview-foot'
+      panel.appendChild(panelHead)
+      panel.appendChild(panelBody)
+      panel.appendChild(panelFoot)
+      panel.addEventListener('mousedown', function (event) {
+        // Keep the composer focused while the user scrolls or reads the card.
+        event.preventDefault()
+      })
+      document.body.appendChild(panel)
+
+      let candidate = null
+      let frame = 0
+      let heartbeat = 0
+      let dwellTimer = 0
+      let disposed = false
+      let emptyEditor = null
+      let placeholderValue
+      let placeholderActive = false
+      let focusAt = 0
+      let lastShownKey = null
+      let lastAnnouncement = ''
+      let stats = readPromptPilotStats()
+      let panelVisible = false
+      let panelKey = null
+      let panelLabelKey = ''
+      let aiPendingKey = null
+      let aiRequestController = null
+      let aiRequestTimer = 0
+      const aiCache = new Map()
+      const aiFailures = new Map()
+      const AI_FAILURE_TTL = 60 * 1000
+      const label = function (key, fallback) {
+        try {
+          const value = t(key)
+          return value && value !== key ? value : fallback
+        } catch {
+          return fallback
+        }
+      }
+      const hintFor = function (labelKey) {
+        return labelKey === 'ghost.local.ready' || labelKey === 'ghost.ai.fallback'
+          ? label('ghost.local.hint', '本地生成，不发起模型调用')
+          : label('ghost.ai.hint', 'AI 只为这个上下文调用一次')
+      }
+      const trimAiCache = function () {
+        while (aiCache.size > AI_CACHE_MAX) {
+          let oldestKey = null
+          let oldestAt = Infinity
+          for (const [key, value] of aiCache) {
+            if (value.at < oldestAt) {
+              oldestAt = value.at
+              oldestKey = key
+            }
+          }
+          if (oldestKey === null) break
+          aiCache.delete(oldestKey)
+        }
+      }
+      const hidePanel = function () {
+        panelVisible = false
+        panelKey = null
+        panelLabelKey = ''
+        panel.style.display = 'none'
+        panelTitle.textContent = ''
+        panelBody.textContent = ''
+        panelFoot.textContent = ''
+      }
+      const positionPanel = function (editor) {
+        if (!panelVisible || !editor) return
+        const margin = 8
+        const width = Math.max(220, Math.min(620, window.innerWidth - margin * 2))
+        panel.style.width = width + 'px'
+        const box = editor.getBoundingClientRect()
+        const height = panel.offsetHeight
+        let top = box.top - height - 10
+        if (top < margin) top = box.bottom + 10
+        if (top + height > window.innerHeight - margin) top = Math.max(margin, window.innerHeight - height - margin)
+        const left = Math.max(margin, Math.min(box.left, window.innerWidth - width - margin))
+        panel.style.left = left + 'px'
+        panel.style.top = top + 'px'
+      }
+      const refreshPanel = function (editor, text, labelKey, meta) {
+        if (!panelVisible || !text) return
+        panelTitle.textContent = label(labelKey, labelKey === 'ghost.ai.ready' ? 'AI 提示词建议' : '提示词建议')
+        panelHint.textContent = hintFor(labelKey)
+        panelBody.textContent = text
+        panelLabelKey = labelKey
+        if (candidate) {
+          candidate.full = text
+          candidate.tail = text
+          candidate.ai = Boolean(meta && meta.ai)
+        }
+        positionPanel(editor)
+        announce(text)
+      }
+      const showPanel = function (editor, text, opts) {
+        const options = opts || {}
+        if (!panel.isConnected) document.body.appendChild(panel)
+        if (!element.isConnected) document.body.appendChild(element)
+        panelTitle.textContent = label(options.labelKey || 'ghost.local.ready', '提示词建议')
+        panelHint.textContent = hintFor(options.labelKey || 'ghost.local.ready')
+        panelBody.textContent = text
+        panelFoot.textContent = label('ghost.footer', 'Tab 接受 · Esc 收起')
+        panel.style.display = 'flex'
+        panelVisible = true
+        panelKey = options.key == null ? null : String(options.key)
+        panelLabelKey = options.labelKey || 'ghost.local.ready'
+        positionPanel(editor)
+        element.style.display = 'none'
+        element.textContent = ''
+        candidate = {
+          full: text,
+          tail: text,
+          contextual: true,
+          kind: options.kind || 'next-step',
+          key: options.key == null ? null : String(options.key),
+          ai: Boolean(options.ai),
+        }
+        announce(text)
+      }
+      const markFallback = function (suggestion) {
+        if (!panelVisible || panelLabelKey !== 'ghost.ai.pending') return
+        if (suggestion && panelKey !== String(suggestion.key)) return
+        panelTitle.textContent = label('ghost.ai.fallback', '提示词建议（本地）')
+        panelHint.textContent = hintFor('ghost.ai.fallback')
+        panelLabelKey = 'ghost.ai.fallback'
+      }
+      const requestAi = function (editor, suggestion, context) {
+        const current = store.get()
+        if (current.aiPrompt === false || !suggestion || !suggestion.full) return
+        const key = aiContextKey(context, getLocale(), suggestion.full)
+        const cached = aiCache.get(key)
+        if (cached && Date.now() - cached.at < AI_CACHE_TTL) {
+          refreshPanel(editor, cached.prompt, 'ghost.ai.ready', { ai: true })
+          return
+        }
+        const failedAt = aiFailures.get(key)
+        if (failedAt && Date.now() - failedAt < AI_FAILURE_TTL) {
+          markFallback(suggestion)
+          return
+        }
+        if (aiPendingKey === key) return
+        if (aiRequestController) aiRequestController.abort()
+        const controller = typeof AbortController === 'function' ? new AbortController() : null
+        aiRequestController = controller
+        aiPendingKey = key
+        const recordFailure = function () {
+          aiFailures.set(key, Date.now())
+          while (aiFailures.size > AI_CACHE_MAX) {
+            let oldestKey = null
+            let oldestAt = Infinity
+            for (const [entryKey, at] of aiFailures) {
+              if (at < oldestAt) {
+                oldestAt = at
+                oldestKey = entryKey
+              }
+            }
+            if (oldestKey === null) break
+            aiFailures.delete(oldestKey)
+          }
+        }
+        if (aiRequestTimer) window.clearTimeout(aiRequestTimer)
+        aiRequestTimer = window.setTimeout(function () {
+          if (controller) controller.abort()
+        }, 20000)
+        requestAiPrompt(context, getLocale(), suggestion.full, controller ? controller.signal : undefined)
+          .then(function (prompt) {
+            if (!prompt) {
+              recordFailure()
+              if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+              markFallback(suggestion)
+              return
+            }
+            aiFailures.delete(key)
+            aiCache.set(key, { prompt: prompt, at: Date.now() })
+            trimAiCache()
+            if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+            if (editor !== composerEditor() || document.activeElement !== editor) return
+            if (String(editor.textContent || '').trim() !== '') return
+            refreshPanel(editor, prompt, 'ghost.ai.ready', { ai: true })
+          })
+          .catch(function () {
+            recordFailure()
+            if (disposed || !panelVisible || panelKey !== String(suggestion.key)) return
+            markFallback(suggestion)
+          })
+          .finally(function () {
+            if (aiRequestTimer) {
+              window.clearTimeout(aiRequestTimer)
+              aiRequestTimer = 0
+            }
+            if (aiRequestController === controller) aiRequestController = null
+            if (aiPendingKey === key) aiPendingKey = null
+          })
+      }
+
+      const restorePlaceholder = function () {
+        if (!placeholderActive) return
+        const editor = emptyEditor
+        const value = placeholderValue
+        placeholderActive = false
+        emptyEditor = null
+        placeholderValue = undefined
+        if (!editor) return
+        try {
+          editor.classList.remove('ccm-ghost-placeholder')
+          // Only undo the attribute value this entry blanked; a Host re-render
+          // may already have installed a newer placeholder string.
+          if (value !== undefined && editor.getAttribute('data-placeholder') === '') {
+            if (value === null) editor.removeAttribute('data-placeholder')
+            else editor.setAttribute('data-placeholder', value)
+          }
+        } catch {
+          /* the Host replaced its editor */
+        }
+      }
+
+      const hide = function () {
+        candidate = null
+        element.style.display = 'none'
+        element.textContent = ''
+        live.textContent = ''
+        lastAnnouncement = ''
+        hidePanel()
+        restorePlaceholder()
+      }
+
+      const hidePlaceholder = function (editor) {
+        if (placeholderActive) {
+          try {
+            if (editor.getAttribute('data-placeholder') !== '') editor.setAttribute('data-placeholder', '')
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+        try {
+          placeholderValue = editor.getAttribute('data-placeholder')
+          emptyEditor = editor
+          placeholderActive = true
+          editor.classList.add('ccm-ghost-placeholder')
+          if (placeholderValue !== null) editor.setAttribute('data-placeholder', '')
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const announce = function (text) {
+        if (!text) return
+        const prefix = String(getLocale() || '').toLowerCase().indexOf('zh') === 0 ? '输入建议：' : 'Suggestion: '
+        const message = prefix + text
+        if (message === lastAnnouncement) return
+        lastAnnouncement = message
+        live.textContent = message
+      }
+
+      const showGhost = function (editor, displayText, fullText, rect, contextual, kind, key) {
+        hidePanel()
+        const style = getComputedStyle(editor)
+        const lineHeight = parseFloat(style.lineHeight) || rect.height || 20
+        const editorBox = editor.getBoundingClientRect()
+        element.textContent = displayText
+        element.style.display = 'inline-block'
+        element.style.left = rect.left + 'px'
+        element.style.top = (rect.top + Math.max(0, (rect.height - lineHeight) / 2)) + 'px'
+        element.style.height = lineHeight + 'px'
+        element.style.lineHeight = lineHeight + 'px'
+        element.style.maxWidth = Math.max(80, editorBox.right - rect.left - 8) + 'px'
+        element.style.font = style.font
+        element.style.letterSpacing = style.letterSpacing
+        candidate = {
+          full: fullText,
+          tail: displayText,
+          contextual: Boolean(contextual),
+          kind: kind || 'prefix',
+          key: key == null ? null : String(key),
+        }
+        if (contextual) announce(fullText)
+      }
+
+      const accept = function () {
+        if (!candidate) return
+        const accepted = candidate
+        if (accepted.contextual && accepted.kind) {
+          stats = recordPilotEvent(stats, accepted.kind, 'accepted', Date.now(), accepted.key || '')
+          savePromptPilotStats(stats)
+        }
+        hide()
+        try {
+          if (typeof runtime.fillDraft === 'function') {
+            runtime.fillDraft(accepted.full)
+          } else if (props.inputActions && typeof props.inputActions.setDraft === 'function') {
+            props.inputActions.setDraft(accepted.full)
+          }
+        } catch {
+          /* the Host refused this programmatic write */
+        }
+      }
+
+      const dismiss = function () {
+        if (!candidate) return
+        const dismissed = candidate
+        if (dismissed.contextual && dismissed.kind) {
+          stats = recordPilotEvent(stats, dismissed.kind, 'dismissed', Date.now(), dismissed.key || '')
+          savePromptPilotStats(stats)
+        }
+        hide()
+      }
+
+      const update = function () {
+        frame = 0
+        if (disposed) return
+        try {
+          const current = store.get()
+          if (!current.enabled || current.ghost === false) return hide()
+          const editor = composerEditor()
+          const active = document.activeElement
+          if (!editor || !(active === editor || (active && editor.contains(active)))) {
+            focusAt = 0
+            return hide()
+          }
+          if (!focusAt) focusAt = Date.now()
+          const palette = document.querySelector('.ccm-palette')
+          if (isElementVisible(palette)) return hide()
+          if (hostMenuOpen()) return hide()
+          const hostModal = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).find(function (node) {
+            return !node.classList.contains('ccm-palette') && !node.classList.contains('ccm-shortcuts') && isElementVisible(node)
+          })
+          if (hostModal) return hide()
+          const draftText = String(editor.textContent || '')
+          const legacy = chatRef.current && chatRef.current.legacy
+          const nodes = legacy && Array.isArray(legacy.nodes) ? legacy.nodes : []
+          const prompts = collectPromptHistory(nodes, 50)
+          if (!draftText.trim()) {
+            if (current.ghostContext === false) return hide()
+            if (runtime.running) return hide()
+            // Give the composer a short focus dwell before replacing its
+            // placeholder, so a passing click does not flash a suggestion.
+            const dwell = Date.now() - focusAt
+            if (dwell < 350) {
+              hide()
+              scheduleDwell(350 - dwell)
+              return
+            }
+            const context = promptContextFromChat(chatRef.current)
+            const sessionTitle = sessionTitleFromDocument()
+            const promptInput = {
+              assistantText: context.assistantText,
+              toolText: context.toolText,
+              assistantFresh: context.assistantFresh,
+              toolFresh: context.toolFresh,
+              lastUserPrompt: context.lastUserPrompt,
+              sessionTitle: sessionTitle,
+              sessionId: props.sessionId,
+              running: runtime.running,
+              locale: getLocale(),
+              stats: stats,
+            }
+            const suggestion = buildPromptDraft(promptInput)
+            if (!suggestion || !suggestion.full) return hide()
+            if (suggestionSuppressed(stats, suggestion.key)) return hide()
+            const aiKey = aiContextKey(
+              Object.assign({}, context, { sessionTitle: sessionTitle }),
+              getLocale(),
+              suggestion.full,
+            )
+            const cached = current.aiPrompt === false ? null : aiCache.get(aiKey)
+            const cachedPrompt = cached && Date.now() - cached.at < AI_CACHE_TTL ? cached.prompt : ''
+            if (panelVisible && panelKey === String(suggestion.key)) {
+              if (!panel.isConnected) document.body.appendChild(panel)
+              if (!element.isConnected) document.body.appendChild(element)
+              positionPanel(editor)
+              return
+            }
+            hidePlaceholder(editor)
+            showPanel(editor, cachedPrompt || suggestion.full, {
+              key: suggestion.key,
+              kind: suggestion.kind,
+              labelKey: cachedPrompt ? 'ghost.ai.ready' : current.aiPrompt === false ? 'ghost.local.ready' : 'ghost.ai.pending',
+              ai: Boolean(cachedPrompt),
+            })
+            if (!cachedPrompt && current.aiPrompt !== false) {
+              requestAi(editor, suggestion, Object.assign({}, context, { sessionTitle: sessionTitle }))
+            }
+            if (lastShownKey !== String(suggestion.key)) {
+              lastShownKey = String(suggestion.key)
+              stats = recordPilotEvent(stats, suggestion.kind, 'shown', Date.now(), lastShownKey)
+              savePromptPilotStats(stats)
+            }
+            return
+          }
+          restorePlaceholder()
+          const match = suggestPromptCompletion(draftText, prompts.length > 0 ? prompts : runtime.promptHistory, getLocale())
+          if (!match || !match.tail) return hide()
+          const caret = caretAtComposerEnd(editor)
+          if (!caret) return hide()
+          showGhost(editor, match.tail, match.full, caret, false, 'prefix', null)
+        } catch (error) {
+          // A malformed Chat snapshot or a Host re-render must never leave the
+          // suggestion pipeline permanently stuck. Hide and try again on the
+          // next heartbeat.
+          hide()
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[dsh-claude-mode] prompt suggestion update failed', error)
+          }
+        }
+      }
+
+      const schedule = function () {
+        if (disposed || frame) return
+        frame = window.requestAnimationFrame(update)
+      }
+      const scheduleDwell = function (delay) {
+        if (disposed || dwellTimer) return
+        dwellTimer = window.setTimeout(function () {
+          dwellTimer = 0
+          schedule()
+        }, Math.max(0, delay))
+      }
+      const clearDwell = function () {
+        if (!dwellTimer) return
+        window.clearTimeout(dwellTimer)
+        dwellTimer = 0
+      }
+      refreshRef.current = schedule
+
+      const onFocusIn = function (event) {
+        const editor = composerEditor()
+        if (editor && (event.target === editor || (event.target && editor.contains(event.target)))) {
+          focusAt = Date.now()
+        }
+        schedule()
+      }
+      const onFocusOut = function (event) {
+        const editor = composerEditor()
+        if (!editor || event.target === editor) {
+          focusAt = 0
+          clearDwell()
+        }
+        schedule()
+      }
+      const onKeyDown = function (event) {
+        if (disposed || !candidate) return
+        if (event.defaultPrevented || event.isComposing) return
+        if (!store.get().enabled || store.get().ghost === false) return
+        if (event.key === 'Escape') {
+          if (!candidate.contextual || runtime.running) return
+          if (hostMenuOpen()) return
+          event.preventDefault()
+          event.stopPropagation()
+          dismiss()
+          return
+        }
+        if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return
+        if (hostMenuOpen()) return
+        event.preventDefault()
+        event.stopPropagation()
+        accept()
+      }
+
+      document.addEventListener('input', schedule, true)
+      document.addEventListener('focusin', onFocusIn, true)
+      document.addEventListener('focusout', onFocusOut, true)
+      document.addEventListener('selectionchange', schedule, true)
+      document.addEventListener('pointerdown', schedule, true)
+      document.addEventListener('keyup', schedule, true)
+      document.addEventListener('visibilitychange', schedule, true)
+      window.addEventListener('focus', schedule)
+      window.addEventListener('scroll', schedule, true)
+      window.addEventListener('resize', schedule)
+      window.addEventListener('keydown', onKeyDown, true)
+      // Host menus, palettes, and React re-renders can swallow the one event
+      // that would have reopened the card. A cheap heartbeat keeps the empty
+      // composer suggestion observable without depending on a specific Host
+      // renderer event order.
+      heartbeat = window.setInterval(schedule, 350)
+      schedule()
+
+      return function () {
+        disposed = true
+        if (refreshRef.current === schedule) refreshRef.current = null
+        clearDwell()
+        if (heartbeat) {
+          window.clearInterval(heartbeat)
+          heartbeat = 0
+        }
+        if (aiRequestTimer) {
+          window.clearTimeout(aiRequestTimer)
+          aiRequestTimer = 0
+        }
+        if (aiRequestController) {
+          aiRequestController.abort()
+          aiRequestController = null
+        }
+        window.cancelAnimationFrame(frame)
+        document.removeEventListener('input', schedule, true)
+        document.removeEventListener('focusin', onFocusIn, true)
+        document.removeEventListener('focusout', onFocusOut, true)
+        document.removeEventListener('selectionchange', schedule, true)
+        document.removeEventListener('pointerdown', schedule, true)
+        document.removeEventListener('keyup', schedule, true)
+        document.removeEventListener('visibilitychange', schedule, true)
+        window.removeEventListener('focus', schedule)
+        window.removeEventListener('scroll', schedule, true)
+        window.removeEventListener('resize', schedule)
+        window.removeEventListener('keydown', onKeyDown, true)
+        hide()
+        element.remove()
+        live.remove()
+        panel.remove()
+      }
+    }, [settings.enabled, settings.ghost, settings.ghostContext, settings.aiPrompt, props.inputActions])
+
+    return null
+  }
+}
 function shortenText(text, max) {
   const flat = String(text == null ? '' : text).replace(/\s+/g, ' ').trim()
   if (!flat) return ''
@@ -542,6 +1275,46 @@ export function createHeaderButton(ctx, store, t) {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Sidebar pinned-chat shortcut                                            */
+/* ---------------------------------------------------------------------- */
+
+/** Pin glyph for the sidebar footer shortcut. */
+function PinIcon() {
+  return React.createElement('svg', {
+    className: 'ccm-action-icon',
+    viewBox: '0 0 16 16',
+    width: 16,
+    height: 16,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.4,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': 'true',
+  }, [
+    React.createElement('path', { key: 'p', d: 'M9.1 2.1a3.4 3.4 0 0 0-3.4 3.4c0 1.2.6 2.3 1.5 3v3.2L9.1 14l1.9-2.3V8.5a3.6 3.6 0 0 0 1.5-3A3.4 3.4 0 0 0 9.1 2.1Z' }),
+    React.createElement('path', { key: 'l', d: 'M9.1 8.5v2.2' }),
+  ])
+}
+
+/** Sidebar footer button that opens the palette at its pinned-chat section. */
+export function createPinnedButton(ctx, store, t) {
+  return function PinnedButton() {
+    const settings = useSettings(store)
+    if (!settings.enabled) return null
+    const label = t('action.pinned.label')
+    return React.createElement('button', {
+      type: 'button',
+      className: 'ccm-iconbtn ccm-pinned-btn',
+      title: label,
+      'aria-label': label,
+      'data-claude-mode': '',
+      onClick: openPalette,
+    }, React.createElement(PinIcon))
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Assistant read-aloud action                                            */
 /* ---------------------------------------------------------------------- */
 
@@ -840,6 +1613,33 @@ export function createPalette(ctx, store, t, buildActions) {
     }, [close])
 
     const historyVersion = Number(runtime.historyVersion) || 0
+    const pinnedItems = React.useMemo(function () {
+      if (!open) return []
+      try {
+        const workspaces = ctx.get('workspaces')
+        const sessions = ctx.get('sessions')
+        if (!workspaces || !workspaces.list || typeof workspaces.list.getSnapshot !== 'function') return []
+        if (!sessions || !sessions.list || typeof sessions.list.getSnapshot !== 'function') return []
+        return mapPinnedSessions(
+          workspaces.list.getSnapshot(),
+          sessions.list.getSnapshot(),
+          8,
+        ).map(function (row) {
+          return {
+            id: 'pinned:' + row.sessionId,
+            section: 'pinned',
+            title: shortenText(row.title, 64),
+            detail: row.workspaceTitle || t('palette.section.pinned'),
+            keywords: row.title + ' 置顶 pinned',
+            run: function () {
+              openSessionById(ctx, row.sessionId)
+            },
+          }
+        })
+      } catch {
+        return []
+      }
+    }, [open, t, historyVersion])
     const allItems = React.useMemo(function () {
       const base = buildActions(settings, t)
       const history = Array.isArray(runtime.promptHistory) ? runtime.promptHistory.slice(0, 12) : []
@@ -877,9 +1677,10 @@ export function createPalette(ctx, store, t, buildActions) {
     }, [sessionResults, t])
     const items = React.useMemo(function () {
       const ranked = rankItems(allItems, query)
-      if (!query.trim()) return ranked
-      return ranked.concat(searchItems)
-    }, [allItems, query, searchItems])
+      const visiblePinned = query.trim() ? rankItems(pinnedItems, query) : pinnedItems
+      if (!query.trim()) return visiblePinned.concat(ranked)
+      return visiblePinned.concat(ranked).concat(searchItems)
+    }, [allItems, query, searchItems, pinnedItems])
     const itemsRef = React.useRef(items)
     itemsRef.current = items
 
@@ -1091,7 +1892,7 @@ export function fuzzyScore(haystack, needle) {
 
 /** Group ranked actions by section, preserving section order. */
 export function groupItems(items) {
-  const order = ['appearance', 'behavior', 'session', 'search', 'history']
+  const order = ['pinned', 'appearance', 'behavior', 'session', 'search', 'history']
   const groups = new Map()
   for (const item of items) {
     const section = item.section || 'session'
@@ -1125,6 +1926,8 @@ export function shortcutGroups(t) {
         { keys: ['↵'], label: label('shortcuts.send') },
         { keys: ['⇧', '↵'], label: label('shortcuts.newline') },
         { keys: ['↑', '↓'], label: label('shortcuts.history') },
+        { keys: ['Tab'], label: label('shortcuts.ghost') },
+        { keys: ['Esc'], label: label('shortcuts.ghostDismiss') },
       ],
     },
     {
@@ -1413,12 +2216,22 @@ export function createSettingsSection(ctx, store, t) {
               onClick: function () { playCompletionChime() },
             }, t('settings.sound.preview')),
           ])),
+        row('ghost', t('settings.ghost.title'), t('settings.ghost.hint'),
+          toggle('ghost-switch', settings.ghost, function (next) { store.set({ ghost: next }) }, t('settings.ghost.title'))),
+        row('ghost-context', t('settings.ghostContext.title'), t('settings.ghostContext.hint'),
+          toggle('ghost-context-switch', settings.ghostContext, function (next) { store.set({ ghostContext: next }) }, t('settings.ghostContext.title'))),
+        row('ai-prompt', t('settings.aiPrompt.title'), t('settings.aiPrompt.hint'),
+          toggle('ai-prompt-switch', settings.aiPrompt, function (next) { store.set({ aiPrompt: next }) }, t('settings.aiPrompt.title'))),
       ]),
       React.createElement('div', { key: 'shortcuts', className: 'ccm-settings-group' }, [
         row('sc-palette', t('settings.shortcut.palette'), t('settings.shortcut.hint'),
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌃K'))),
         row('sc-new', t('settings.shortcut.newSession'), null,
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌥N'))),
+        row('sc-ghost', t('shortcuts.ghost'), null,
+          React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Tab'))),
+        row('sc-ghost-dismiss', t('shortcuts.ghostDismiss'), null,
+          React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Esc'))),
         row('sc-interrupt', t('settings.shortcut.interrupt'), null,
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, 'Esc'))),
       ]),
@@ -1443,6 +2256,10 @@ export function createSettingsSection(ctx, store, t) {
 export function SettingsIcon() {
   return React.createElement(Glyph, { size: 16 })
 }
+
+
+
+
 
 
 
