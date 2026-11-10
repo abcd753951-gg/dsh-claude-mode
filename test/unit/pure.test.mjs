@@ -64,6 +64,7 @@ import {
   shortcutGroups,
   startNewSession,
 } from '../../src/client/04-components.js'
+import { STYLES } from '../../src/client/03-styles.js'
 import { format as formatCopy, DICTIONARIES as DICTS } from '../../src/client/02-state.js'
 /* ------------------------------------------------------------------ */
 /* Theme token packs                                                   */
@@ -86,6 +87,13 @@ test('theme ids and token tables are wired', () => {
   assert.equal(THEME_TOKENS[THEME_DARK], DARK_TOKENS)
   assert.equal(THEME_TOKENS[THEME_LIGHT], LIGHT_TOKENS)
   assert.notEqual(THEME_DARK, THEME_LIGHT)
+})
+
+test('host sidebar scroll override keeps the workspace reachable', () => {
+  assert.match(STYLES, /\[class\*="sidebarCol"\][\s\S]*?overflow-y:\s*auto\s*!important/)
+  assert.match(STYLES, /\[class\*="sidebarCol"\] > div > div:first-child[\s\S]*?height:\s*100%\s*!important/)
+  assert.match(STYLES, /\[class\*="regionArea"\][\s\S]*?min-height:\s*280px/)
+  assert.match(STYLES, /\[class\*="panelList"\][\s\S]*?flex:\s*0 0 auto\s*!important/)
 })
 
 test('signature tokens carry the plugin palette', () => {
@@ -800,7 +808,9 @@ test('settings section exposes both prompt-pilot switches and version', () => {
     assert.match(text, /空输入框上下文推荐/)
     assert.match(text, /AI 完善提示词/)
     assert.match(text, /同一上下文只调用一次/)
-    assert.match(text, /1\.0\.0/)
+    assert.match(text, /数据与存储/)
+    assert.match(text, /不会移动正在使用的数据/)
+    assert.match(text, /1\.1\.1/)
   })
 })
 
@@ -830,4 +840,5 @@ test('turn footer stamps a rotating completion word and duration', () => {
     }), null)
   })
 })
+
 

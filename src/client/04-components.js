@@ -11,7 +11,7 @@
 import { assistantTextForMessage, buildPromptDraft, collectPromptHistory, completionWordFor, format, formatDuration, formatElapsed, hash32, mapPinnedSessions, mapSessionSearchResults, normalizePilotStats, openPalette, openShortcuts, PILOT_STATS_KEY, pickSpinnerVerb, playCompletionChime, promptContextFromChat, recordPilotEvent, runtime, SPINNER_REST_FRAME, spinnerFrame, splitSpeechText, stepPromptHistory, suggestPromptCompletion, suggestionSuppressed, subscribePalette, subscribeShortcuts } from './02-state.js'
 
 /** Rendered plugin version (also shown in the Settings about card). */
-export const VERSION = '1.0.0'
+export const VERSION = '1.1.1'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -212,6 +212,72 @@ function requestAiPrompt(context, locale, localPrompt, signal) {
     const text = String(payload.prompt || '').trim()
     return text ? text.slice(0, AI_PROMPT_MAX) : ''
   })
+}
+
+/* ---------------------------------------------------------------------- */
+/* Data & storage audit                                                    */
+/* ---------------------------------------------------------------------- */
+
+const DATA_ROUTE = '/dsh-claude-mode/data'
+
+function requestSameOriginJson(url, options, timeoutMs) {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+    return Promise.reject(new Error('fetch unavailable'))
+  }
+  const controller = typeof AbortController === 'function' ? new AbortController() : null
+  const timer = controller ? window.setTimeout(function () { controller.abort() }, timeoutMs || 20000) : 0
+  const init = Object.assign({}, options || {}, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: Object.assign({ 'x-dsh-claude-mode': '1' }, (options && options.headers) || {}),
+    ...(controller ? { signal: controller.signal } : {}),
+  })
+  return window.fetch(url, init).then(function (response) {
+    if (!response.ok) throw new Error('HTTP ' + response.status)
+    return response.json()
+  }).then(function (payload) {
+    if (!payload || payload.ok !== true) throw new Error(String(payload && (payload.reason || payload.error) || 'request failed'))
+    return payload
+  }).finally(function () {
+    if (timer) window.clearTimeout(timer)
+  })
+}
+
+function requestDataAudit(force) {
+  return requestSameOriginJson(DATA_ROUTE + '/audit' + (force ? '?refresh=1' : ''), { method: 'GET' }, 20000)
+}
+
+function requestDataPlan(targetRoot) {
+  return requestSameOriginJson(DATA_ROUTE + '/plan', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ targetRoot: String(targetRoot || '') }),
+  }, 20000)
+}
+
+function requestDataCleanup(olderThanDays) {
+  return requestSameOriginJson(DATA_ROUTE + '/cleanup', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ olderThanDays: Number(olderThanDays) || 7 }),
+  }, 20000)
+}
+
+function downloadTextFile(filename, text) {
+  try {
+    const blob = new Blob(['\uFEFF' + String(text || '')], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = filename
+    anchor.style.display = 'none'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(function () { URL.revokeObjectURL(url) }, 1500)
+  } catch {
+    /* download is a convenience; the settings surface still shows the plan */
+  }
 }
 
 /**
@@ -2140,6 +2206,273 @@ export function createPanelMenu(ctx, store, t) {
 /* Settings section                                                        */
 /* ---------------------------------------------------------------------- */
 
+/**
+ * Local data audit and migration-script panel.
+ *
+ * The Host endpoint is read-only. The panel only downloads a script; it never
+ * moves a live directory itself because DSH must be stopped for that step.
+ */
+function DataStorageSection(props) {
+  const t = props.t
+  const [audit, setAudit] = React.useState(null)
+  const [status, setStatus] = React.useState('loading')
+  const [error, setError] = React.useState('')
+  const [target, setTarget] = React.useState('E:\\DeepSeek-Harness-Data')
+  const [plan, setPlan] = React.useState(null)
+  const [planStatus, setPlanStatus] = React.useState('idle')
+  const [planError, setPlanError] = React.useState('')
+  const [cleanupDays, setCleanupDays] = React.useState(7)
+  const [cleanup, setCleanup] = React.useState(null)
+  const [cleanupStatus, setCleanupStatus] = React.useState('idle')
+  const [cleanupError, setCleanupError] = React.useState('')
+
+  const load = function (force) {
+    setStatus('loading')
+    setError('')
+    requestDataAudit(force).then(function (payload) {
+      setAudit(payload)
+      setStatus('ready')
+    }).catch(function (failure) {
+      setError(String(failure && failure.message ? failure.message : failure))
+      setStatus('error')
+    })
+  }
+
+  React.useEffect(function () {
+    load(false)
+  }, [])
+
+  const makePlan = function () {
+    setPlanStatus('loading')
+    setPlanError('')
+    requestDataPlan(target).then(function (payload) {
+      setPlan(payload)
+      setPlanStatus('ready')
+    }).catch(function (failure) {
+      setPlanError(String(failure && failure.message ? failure.message : failure))
+      setPlanStatus('error')
+    })
+  }
+
+  const makeCleanup = function () {
+    setCleanupStatus('loading')
+    setCleanupError('')
+    requestDataCleanup(cleanupDays).then(function (payload) {
+      setCleanup(payload)
+      setCleanupStatus('ready')
+    }).catch(function (failure) {
+      setCleanupError(String(failure && failure.message ? failure.message : failure))
+      setCleanupStatus('error')
+    })
+  }
+
+  const sizeLabel = function (entry) {
+    const value = entry && entry.bytesLabel ? entry.bytesLabel : '—'
+    return entry && entry.approx ? '≥ ' + value : value
+  }
+
+  const categoryLabel = function (entry) {
+    const key = entry && entry.systemTemp
+      ? 'settings.data.cat.system-temp'
+      : 'settings.data.cat.' + String(entry && entry.id || '')
+    try {
+      const translated = t(key)
+      if (translated && translated !== key) return translated
+    } catch {
+      /* ignore */
+    }
+    return String(entry && entry.label || entry && entry.id || '')
+  }
+
+  const categoryStatus = function (entry) {
+    if (!entry || !entry.exists) return { key: 'missing', label: t('settings.data.missing') }
+    if (entry.managed) return { key: 'managed', label: t('settings.data.managed') }
+    if (String(entry.drive || '').toUpperCase() === 'C:') return { key: 'direct', label: t('settings.data.direct') }
+    return { key: 'other', label: t('settings.data.otherDrive') }
+  }
+
+  const children = []
+  const categories = []
+  if (audit) {
+    if (audit.home) {
+      const homeStatus = categoryStatus(audit.home)
+      children.push(React.createElement('div', { key: 'home', className: 'ccm-data-home' }, [
+        React.createElement('div', { key: 'head', className: 'ccm-data-home-head' }, [
+          React.createElement('span', { key: 't', className: 'ccm-data-row-title' }, t('settings.data.home')),
+          React.createElement('span', { key: 's', className: 'ccm-data-badge is-' + homeStatus.key }, homeStatus.label),
+          React.createElement('span', { key: 'size', className: 'ccm-data-size' }, sizeLabel(audit.home)),
+        ]),
+        React.createElement('div', { key: 'paths', className: 'ccm-data-paths' }, [
+          React.createElement('code', { key: 'p', className: 'ccm-data-path' }, audit.home.path),
+          React.createElement('span', { key: 'arrow', className: 'ccm-data-arrow', 'aria-hidden': 'true' }, '→'),
+          React.createElement('code', { key: 'm', className: 'ccm-data-path' }, audit.home.physical),
+        ]),
+      ]))
+    }
+    if (Array.isArray(audit.drives)) {
+      children.push(React.createElement('div', { key: 'drives', className: 'ccm-data-drives' }, audit.drives.map(function (drive) {
+        return React.createElement('span', { key: drive.drive, className: 'ccm-data-drive' },
+          drive.drive + '  ' + format(t('settings.data.free'), { free: drive.freeLabel, total: drive.totalLabel }))
+      })))
+    }
+    children.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.summary'), {
+        managed: audit.managedLabel || '—',
+        unmanaged: audit.unmanagedLabel || '—',
+      })))
+    children.push(React.createElement('div', { key: 'approx-hint', className: 'ccm-settings-row-hint' }, t('settings.data.approxHint')))
+    if (Array.isArray(audit.categories)) {
+      categories.push(React.createElement('div', { key: 'cat-head', className: 'ccm-data-subhead' }, t('settings.data.locations')))
+      for (const entry of audit.categories) {
+        const state = categoryStatus(entry)
+        categories.push(React.createElement('div', { key: entry.id, className: 'ccm-data-row' }, [
+          React.createElement('div', { key: 'm', className: 'ccm-data-row-main' }, [
+            React.createElement('div', { key: 'title', className: 'ccm-data-row-title' }, categoryLabel(entry)),
+            React.createElement('code', { key: 'path', className: 'ccm-data-path', title: entry.path }, entry.path),
+          ]),
+          React.createElement('div', { key: 'right', className: 'ccm-data-row-right' }, [
+            React.createElement('span', { key: 'size', className: 'ccm-data-size' }, sizeLabel(entry)),
+            React.createElement('span', { key: 'state', className: 'ccm-data-badge is-' + state.key }, state.label),
+          ]),
+        ]))
+      }
+    }
+    if (Array.isArray(audit.children) && audit.children.length) {
+      categories.push(React.createElement('div', { key: 'children-head', className: 'ccm-data-subhead' }, t('settings.data.children')))
+      categories.push(React.createElement('div', { key: 'children', className: 'ccm-data-chips' }, audit.children.map(function (child) {
+        return React.createElement('span', { key: child.id, className: 'ccm-data-chip' }, [
+          React.createElement('span', { key: 'n' }, categoryLabel(child)),
+          React.createElement('span', { key: 'v', className: 'ccm-data-chip-value' }, sizeLabel(child)),
+        ])
+      })))
+    }
+  }
+
+  const planNode = []
+  if (plan) {
+    planNode.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.generated'), { count: plan.actions ? plan.actions.length : 0 })))
+    if (Array.isArray(plan.actions)) {
+      for (const action of plan.actions) {
+        planNode.push(React.createElement('div', { key: 'a-' + action.id, className: 'ccm-data-plan-action' }, [
+          React.createElement('span', { key: 'l', className: 'ccm-data-row-title' }, action.label || action.id),
+          React.createElement('code', { key: 'p', className: 'ccm-data-path' }, action.source + ' → ' + action.target),
+          React.createElement('span', { key: 's', className: 'ccm-data-size' }, sizeLabel(action)),
+        ]))
+      }
+    }
+    if (Array.isArray(plan.warnings) && plan.warnings.length) {
+      planNode.push(React.createElement('div', { key: 'warn', className: 'ccm-data-note' }, [
+        React.createElement('strong', { key: 't' }, t('settings.data.warnings') + '：'),
+        React.createElement('span', { key: 'b' }, plan.warnings.join(' ')),
+      ]))
+    }
+    if (Array.isArray(plan.instructions) && plan.instructions.length) {
+      planNode.push(React.createElement('ol', { key: 'steps', className: 'ccm-data-steps' }, plan.instructions.map(function (step, index) {
+        return React.createElement('li', { key: 's-' + index }, step)
+      })))
+    }
+    if (plan.script) {
+      planNode.push(React.createElement('button', {
+        key: 'download',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        onClick: function () { downloadTextFile('dsh-data-migration.ps1', plan.script) },
+      }, t('settings.data.download')))
+    }
+  }
+
+  const cleanupNode = []
+  if (cleanup) {
+    cleanupNode.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.cleanupSummary'), { days: cleanup.olderThanDays })))
+    if (Array.isArray(cleanup.warnings) && cleanup.warnings.length) {
+      cleanupNode.push(React.createElement('div', { key: 'warn', className: 'ccm-data-note' }, [
+        React.createElement('strong', { key: 't' }, t('settings.data.warnings') + '：'),
+        React.createElement('span', { key: 'b' }, cleanup.warnings.join(' ')),
+      ]))
+    }
+    if (cleanup.script) {
+      cleanupNode.push(React.createElement('button', {
+        key: 'download',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        onClick: function () { downloadTextFile('dsh-temp-cleanup.ps1', cleanup.script) },
+      }, t('settings.data.downloadCleanup')))
+    }
+  }
+  const canClean = Boolean(audit && Array.isArray(audit.categories)
+    && audit.categories.some(function (entry) { return entry && entry.cleanable && entry.exists }))
+
+  return React.createElement('div', { key: 'data-storage', className: 'ccm-settings-group ccm-data' }, [
+    React.createElement('div', { key: 'head', className: 'ccm-data-head' }, [
+      React.createElement('div', { key: 'm', className: 'ccm-data-head-main' }, [
+        React.createElement('div', { key: 't', className: 'ccm-settings-row-title' }, t('settings.data.title')),
+        React.createElement('div', { key: 'h', className: 'ccm-settings-row-hint' }, t('settings.data.hint')),
+      ]),
+      React.createElement('button', {
+        key: 'refresh',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        disabled: status === 'loading',
+        onClick: function () { load(true) },
+      }, t('settings.data.refresh')),
+    ]),
+    React.createElement('div', { key: 'state', className: 'ccm-data-state', role: 'status', 'aria-live': 'polite' },
+      status === 'loading' ? t('settings.data.scanning') : status === 'error' ? t('settings.data.failed') + '：' + error : ''),
+    children,
+    categories,
+    React.createElement('div', { key: 'target', className: 'ccm-data-target' }, [
+      React.createElement('label', { key: 'l', className: 'ccm-data-target-label', htmlFor: 'ccm-data-target-input' }, t('settings.data.target')),
+      React.createElement('input', {
+        key: 'i',
+        id: 'ccm-data-target-input',
+        className: 'ccm-data-input',
+        value: target,
+        spellCheck: 'false',
+        onChange: function (event) { setTarget(event.target.value) },
+      }),
+      React.createElement('div', { key: 'hint', className: 'ccm-settings-row-hint' }, t('settings.data.targetHint')),
+    ]),
+    React.createElement('div', { key: 'actions', className: 'ccm-data-actions' }, [
+      React.createElement('button', {
+        key: 'plan',
+        type: 'button',
+        className: 'ccm-btn',
+        disabled: planStatus === 'loading' || !audit,
+        onClick: makePlan,
+      }, planStatus === 'loading' ? t('settings.data.planning') : t('settings.data.plan')),
+    ]),
+    planError ? React.createElement('div', { key: 'plan-error', className: 'ccm-data-note' }, t('settings.data.planFailed') + '：' + planError) : null,
+    planNode,
+    canClean ? React.createElement('div', { key: 'cleanup', className: 'ccm-data-cleanup' }, [
+      React.createElement('div', { key: 'h', className: 'ccm-data-target-label' }, t('settings.data.cleanupHint')),
+      React.createElement('div', { key: 'controls', className: 'ccm-data-actions' }, [
+        React.createElement('label', { key: 'l', className: 'ccm-data-target-label', htmlFor: 'ccm-data-cleanup-days' }, t('settings.data.cleanupDays')),
+        React.createElement('input', {
+          key: 'd',
+          id: 'ccm-data-cleanup-days',
+          className: 'ccm-data-days',
+          type: 'number',
+          min: 1,
+          max: 365,
+          value: cleanupDays,
+          onChange: function (event) { setCleanupDays(Number(event.target.value) || 7) },
+        }),
+        React.createElement('button', {
+          key: 'make',
+          type: 'button',
+          className: 'ccm-btn ccm-btn-quiet',
+          disabled: cleanupStatus === 'loading',
+          onClick: makeCleanup,
+        }, cleanupStatus === 'loading' ? t('settings.data.cleaning') : t('settings.data.cleanup')),
+      ]),
+      cleanupError ? React.createElement('div', { key: 'error', className: 'ccm-data-note' }, t('settings.data.cleanupFailed') + '：' + cleanupError) : null,
+      cleanupNode,
+    ]) : null,
+  ])
+}
+
 /** Build the Settings page component (registered into `settings.section`). */
 export function createSettingsSection(ctx, store, t) {
   return function SettingsSection() {
@@ -2223,6 +2556,7 @@ export function createSettingsSection(ctx, store, t) {
         row('ai-prompt', t('settings.aiPrompt.title'), t('settings.aiPrompt.hint'),
           toggle('ai-prompt-switch', settings.aiPrompt, function (next) { store.set({ aiPrompt: next }) }, t('settings.aiPrompt.title'))),
       ]),
+      React.createElement(DataStorageSection, { key: 'data-storage', t: t }),
       React.createElement('div', { key: 'shortcuts', className: 'ccm-settings-group' }, [
         row('sc-palette', t('settings.shortcut.palette'), t('settings.shortcut.hint'),
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌃K'))),
@@ -2256,6 +2590,7 @@ export function createSettingsSection(ctx, store, t) {
 export function SettingsIcon() {
   return React.createElement(Glyph, { size: 16 })
 }
+
 
 
 

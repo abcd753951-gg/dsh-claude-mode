@@ -36,6 +36,15 @@
 
 没有明确下一步的报错也会生成一条完整的诊断草稿（复现、根因假设、修复后同一验证与剩余风险），而不是静默消失；匹配用户最近使用的语言；不编造上下文中不存在的事实。模型改写只做“更完整、更可执行”的编辑，不新增未出现的文件、数字或结论。另加 350ms 心跳轮询，宿主弹层关闭、React 重渲染或事件顺序异常后仍能重新显示卡片。
 
+## 数据与存储
+
+DSH 的默认数据模型是单根：`configured > $DSH_HOME > ~/.dsh`。Windows 桌面版还会把 Electron userData、更新器缓存、pnpm/npm 缓存和临时目录写到用户目录；这些位置不都由 `DSH_HOME` 控制。插件不另造解析器，只按同一优先级展示逻辑路径与 `realpath` 后的物理路径。
+
+- **只读审计**：Host 扫描 `harness-home`、`desktop-profile`、`updater-cache`、`pnpm-store`、`pnpm-cache`、`npm-cache`、当前 TEMP 与系统 TEMP。用 `lstat` 判断 reparse point，用 `realpath` 找物理目标；遍历时跳过子 junction，避免把链接目标重复计入。单次扫描有 120k 条目 / 4s 上限，触顶的数值标 `≥`，不伪装成精确值。
+- **迁移是事务，不在插件里执行**：Host 只生成可审阅的 PowerShell。脚本先检查 DSH 进程，`robocopy /E /COPY:DAT` 复制，比较源/目标字节数，把原目录改名为 `*.data-keeper-<时间戳>`，再建 junction 并验证 `LinkType`；任何一步失败都把原目录改回。旧副本从不自动删除。源/目标重叠、目标是驱动器根、目标已存在都拒绝。
+- **临时目录只清不搬**：系统 TEMP 建 junction 会影响其他程序，也可能被宿主更新覆盖。清理脚本只匹配 TEMP 下直接子项中名称以 `dsh-` / `dsh_` 开头的旧项，默认 dry-run，`-Apply` 才删；reparse point 和被占用项保留，且永不触碰 DSH 主目录。
+- **与成熟范式对齐**：Claude Code 用默认 30 天的 cleanup 周期与白名单；VS Code/Electron 迁移要求先停写、`app.setPath` 在 ready 前、同一 user-data-dir 不能双开；Chromium 同样要求单实例。插件的“停 DSH → 复制 → 校验 → 切换 → 可回滚”就是这套事务顺序的保守实现。
+
 ## 视觉与主题
 
 - 两套完整令牌：中性炭黑（暗）与中性浅灰（亮），由 `theme` 服务按当前亮暗偏好选择。
@@ -51,6 +60,7 @@
 | 输入提示补全 | `conversation.input.overlay` | Prompt Pilot：空输入框先在本机生成完整草稿（目标/上下文/范围/约束/执行/验收），用多行卡片显示；开启 AI 完善后由当前模型改写，同一上下文只请求一次并双侧缓存，失败走本地完整草稿。输入前缀时补全尾文；`Tab` 接受、`Esc` 收起；接受后删掉正文会重新出现。 |
 | 快捷键一览 | `shell.overlay` | 空输入框按 `?` 打开，输入/导航/界面三组。 |
 | 左侧边栏折叠 | `layout.toggleSidebar` | 运行条 `«`、`Alt+B` 与面板动作三个入口。 |
+| 左侧边栏整体滚动 | 宿主侧栏结构覆盖 | 展开较多插件图标时整栏滚动而不是挤压工作区；普通状态保持原高度，工作区至少保留 280px。 |
 | 插件图标折叠 | `sidebar.panellist.actions` | 在侧边栏「更多」菜单中逐项显示/隐藏、一键收起/展开插件图标。 |
 | 命令面板 | `shell.overlay` | `Ctrl+K` 模糊搜索、分组、键盘导航；动作涵盖模式/主题/组件开关、侧边栏、插件图标、快捷键、中断与新建会话。 |
 | 聊天记录搜索 | `sessions.search` + 面板 | 输入两个以上字符时防抖搜索宿主全文索引，结果进入「聊天记录」分组，回车打开对应会话；索引未启用时安静缺席。 |
@@ -59,6 +69,7 @@
 | 新建会话快捷键 | `uiWorkspace.startSession` | `Alt+N` 打开空白会话。 |
 | 回合页脚 | `conversation.chat.turnTail` | 完成后显示完成词与用时，兼容 list 与旧版 chain 槽。 |
 | 设置页 | `settings.section` | 总开关、主题、状态条/页脚/动效/提示音/输入补全/空输入框上下文推荐/AI 完善提示词、试听、快捷键、恢复默认、关于。 |
+| 数据与存储 | `settings.section` + Host `/dsh-claude-mode/data` | 只读审计 + junction/物理路径/盘余量/`≥` 近似值；生成迁移 `.ps1` 与临时目录 dry-run 清理 `.ps1`；不自动执行、不自动删除。 |
 
 ## 动效与可访问性
 

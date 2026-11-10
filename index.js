@@ -9,21 +9,49 @@
  */
 
 import { createHash } from 'node:crypto'
+import { auditData, formatBytes } from './lib/data-audit.mjs'
+import { buildMigrationPlan } from './lib/data-plan.mjs'
+import { buildCleanupPlan } from './lib/data-clean.mjs'
 
 /** Stable package / loader row name. */
 export const name = 'dsh-claude-mode'
 
 /** A fixed path so a hijacked page cannot redirect the model call elsewhere. */
 const AI_ROUTE = '/dsh-claude-mode/ai-prompt'
+const DATA_ROUTE = '/dsh-claude-mode/data'
 const GATE_HEADER = 'x-dsh-claude-mode'
 const MAX_BODY = 32 * 1024
+const MAX_DATA_BODY = 64 * 1024
 const CACHE_TTL_MS = 10 * 60 * 1000
+const DATA_CACHE_TTL_MS = 30 * 1000
 const CACHE_MAX = 32
 const MAX_PROMPT_CHARS = 1200
 
 /** The Host row stays inert until the web carrier appears. */
 export function apply(ctx) {
   if (!ctx || typeof ctx.inject !== 'function') return
+  // Data audit/plan are local-only and must work even when no model is
+  // configured, so they get their own injection seam.
+  ctx.inject(['webServer'], (webCtx) => {
+    const webServer = webCtx && webCtx.webServer
+    if (!webServer || typeof webServer.register !== 'function') return
+    let auditCache = null
+    let auditAt = 0
+    const getAudit = async function (refresh) {
+      const now = Date.now()
+      if (!refresh && auditCache && now - auditAt < DATA_CACHE_TTL_MS) return auditCache
+      const audit = await auditData()
+      auditCache = audit
+      auditAt = Date.now()
+      return audit
+    }
+    const handler = createDataHandler(webCtx, getAudit)
+    return webCtx.effect(() => webServer.register({
+      kind: 'prefix',
+      path: DATA_ROUTE,
+      handler,
+    }))
+  })
   ctx.inject(['webServer', 'llm', 'agentDefaultModel'], (webCtx) => {
     const webServer = webCtx && webCtx.webServer
     const llm = webCtx && webCtx.llm
@@ -113,6 +141,127 @@ function createHandler(webCtx, llm, defaultModel, cache, allowCall) {
       sendJson(res, 200, { ok: false, error: 'generation failed', reason: messageOf(error) })
     }
   }
+}
+
+/** Build the read-only data audit / migration-plan route handler. */
+function createDataHandler(webCtx, getAudit) {
+  return async function handler(req, res) {
+    try {
+      const method = String(req.method || 'GET').toUpperCase()
+      if (!req.headers || String(req.headers[GATE_HEADER] || '') !== '1') {
+        sendJson(res, 403, { ok: false, error: 'same-origin header required' })
+        return
+      }
+      const url = new URL(String(req.url || DATA_ROUTE), 'http://127.0.0.1')
+      const pathname = url.pathname.replace(/\/+$/, '')
+      if (pathname === DATA_ROUTE + '/audit' || pathname === DATA_ROUTE + '/audit.json') {
+        if (method !== 'GET' && method !== 'POST') {
+          sendJson(res, 405, { ok: false, error: 'method not allowed' })
+          return
+        }
+        const audit = await getAudit(url.searchParams.get('refresh') === '1')
+        sendJson(res, 200, decorateAudit(audit))
+        return
+      }
+      if (pathname === DATA_ROUTE + '/plan') {
+        if (method !== 'POST') {
+          sendJson(res, 405, { ok: false, error: 'method not allowed' })
+          return
+        }
+        let raw
+        try {
+          raw = await readBody(req, MAX_DATA_BODY)
+        } catch (error) {
+          sendJson(res, 413, { ok: false, error: 'request body too large' })
+          return
+        }
+        let body
+        try {
+          body = raw ? JSON.parse(raw) : null
+        } catch {
+          sendJson(res, 400, { ok: false, error: 'invalid JSON' })
+          return
+        }
+        const audit = await getAudit(false)
+        try {
+          const plan = buildMigrationPlan({
+            targetRoot: body && body.targetRoot,
+            audit,
+          })
+          sendJson(res, 200, decoratePlan(plan))
+        } catch (error) {
+          sendJson(res, 400, { ok: false, error: messageOf(error) })
+        }
+        return
+      }
+      if (pathname === DATA_ROUTE + '/cleanup') {
+        if (method !== 'POST') {
+          sendJson(res, 405, { ok: false, error: 'method not allowed' })
+          return
+        }
+        let raw
+        try {
+          raw = await readBody(req, MAX_DATA_BODY)
+        } catch (error) {
+          sendJson(res, 413, { ok: false, error: 'request body too large' })
+          return
+        }
+        let body
+        try {
+          body = raw ? JSON.parse(raw) : null
+        } catch {
+          sendJson(res, 400, { ok: false, error: 'invalid JSON' })
+          return
+        }
+        const audit = await getAudit(false)
+        try {
+          const plan = buildCleanupPlan({
+            audit,
+            olderThanDays: body && body.olderThanDays,
+          })
+          sendJson(res, 200, plan)
+        } catch (error) {
+          sendJson(res, 400, { ok: false, error: messageOf(error) })
+        }
+        return
+      }
+      sendJson(res, 404, { ok: false, error: 'not found' })
+    } catch (error) {
+      if (webCtx && webCtx.logger && typeof webCtx.logger.warn === 'function') {
+        webCtx.logger.warn('[dsh-claude-mode] data audit failed: ' + messageOf(error))
+      }
+      sendJson(res, 500, { ok: false, error: 'data audit failed', reason: messageOf(error) })
+    }
+  }
+}
+
+function decorateAudit(audit) {
+  const categories = Array.isArray(audit && audit.categories) ? audit.categories : []
+  const approx = categories.some((entry) => entry && entry.approx)
+  const decorate = function (entry) {
+    return Object.assign({}, entry, { bytesLabel: formatBytes(entry.bytes) })
+  }
+  return Object.assign({}, audit, {
+    home: audit && audit.home ? decorate(audit.home) : null,
+    categories: categories.map(decorate),
+    children: Array.isArray(audit && audit.children) ? audit.children.map(decorate) : [],
+    drives: Array.isArray(audit && audit.drives)
+      ? audit.drives.map((drive) => Object.assign({}, drive, {
+        freeLabel: formatBytes(drive.free),
+        totalLabel: formatBytes(drive.total),
+      }))
+      : [],
+    managedLabel: (approx ? '≥ ' : '') + formatBytes(audit && audit.managedBytes),
+    unmanagedLabel: (approx ? '≥ ' : '') + formatBytes(audit && audit.unmanagedBytes),
+  })
+}
+
+function decoratePlan(plan) {
+  return Object.assign({}, plan, {
+    actions: Array.isArray(plan.actions)
+      ? plan.actions.map((action) => Object.assign({}, action, { bytesLabel: formatBytes(action.bytes) }))
+      : [],
+  })
 }
 
 /** Read one bounded request body. */

@@ -747,6 +747,55 @@ const DICTIONARIES = {
     'ghost.ai.hint': 'AI 只为这个上下文调用一次',
     'ghost.local.hint': '本地生成，不发起模型调用',
     'ghost.footer': 'Tab 接受 · Esc 收起',
+    'settings.data.title': '数据与存储',
+    'settings.data.hint': '审计 DSH 主目录、桌面数据、更新与包缓存、临时目录；只读扫描，不会移动正在使用的数据。',
+    'settings.data.scanning': '正在扫描本地数据…',
+    'settings.data.failed': '数据审计失败',
+    'settings.data.refresh': '刷新审计',
+    'settings.data.target': '迁移到',
+    'settings.data.targetHint': '目标根目录；建议放在空间充足的非系统盘。',
+    'settings.data.targetPlaceholder': 'E:\\DeepSeek-Harness-Data',
+    'settings.data.plan': '生成迁移脚本',
+    'settings.data.planning': '正在生成…',
+    'settings.data.planFailed': '生成迁移脚本失败',
+    'settings.data.download': '下载 .ps1',
+    'settings.data.direct': '仍在 C 盘',
+    'settings.data.managed': '已托管',
+    'settings.data.otherDrive': '已在其他盘',
+    'settings.data.missing': '不存在',
+    'settings.data.home': '主数据目录',
+    'settings.data.children': '主目录占用',
+    'settings.data.locations': '各位置',
+    'settings.data.generated': '已生成 {count} 个迁移项',
+    'settings.data.warnings': '注意',
+    'settings.data.instructions': '执行步骤',
+    'settings.data.free': '可用 {free} / {total}',
+    'settings.data.summary': '已托管 {managed} · C 盘未托管 {unmanaged}',
+    'settings.data.approxHint': '“≥”表示扫描达到时间或条目上限，实际占用至少这么大，通常更大；刷新后重新测量。',
+    'settings.data.cleanupHint': '临时目录只清理旧的 dsh-* 项，不做 junction；先在普通 PowerShell 里 dry-run 检查。',
+    'settings.data.cleanupDays': '清理早于（天）',
+    'settings.data.cleanup': '生成清理脚本',
+    'settings.data.cleaning': '正在生成…',
+    'settings.data.cleanupFailed': '生成清理脚本失败',
+    'settings.data.cleanupSummary': '只清理 {days} 天前的 dsh-* / dsh_* 临时项；脚本默认只列出，不会删除。',
+    'settings.data.downloadCleanup': '下载清理脚本 .ps1',
+    'settings.data.cat.harness-home': 'DSH 主数据目录',
+    'settings.data.cat.desktop-profile': 'DSH 桌面端数据',
+    'settings.data.cat.updater-cache': 'DSH 更新器缓存',
+    'settings.data.cat.pnpm-store': 'pnpm 全局目录',
+    'settings.data.cat.pnpm-cache': 'pnpm 缓存',
+    'settings.data.cat.npm-cache': 'npm 缓存',
+    'settings.data.cat.temp': 'DSH 临时目录',
+    'settings.data.cat.system-temp': '系统临时目录',
+    'settings.data.cat.profiles': 'profiles',
+    'settings.data.cat.sessions': 'sessions',
+    'settings.data.cat.attachments': 'attachments',
+    'settings.data.cat.cache': 'cache',
+    'settings.data.cat.logs': 'logs',
+    'settings.data.cat.dsh-runtimes': 'dsh-runtimes',
+    'settings.data.cat.speech-to-text': 'speech-to-text',
+    'settings.data.cat.storages': 'storages',
+    'settings.data.cat.skills': 'skills',
     'settings.shortcut.title': '快捷键',
     'settings.shortcut.hint': '在输入框内也可用；宿主若占用同名快捷键，以宿主为准。',
     'settings.shortcut.palette': '命令面板',
@@ -908,6 +957,55 @@ const DICTIONARIES = {
     'ghost.ai.hint': 'One AI call for this context',
     'ghost.local.hint': 'Local template; no model call',
     'ghost.footer': 'Tab accept · Esc dismiss',
+    'settings.data.title': 'Data & storage',
+    'settings.data.hint': 'Audits the DSH home, desktop data, update/package caches and temp folder. Read-only: it never moves data in use.',
+    'settings.data.scanning': 'Scanning local data…',
+    'settings.data.failed': 'Data audit failed',
+    'settings.data.refresh': 'Refresh audit',
+    'settings.data.target': 'Migrate to',
+    'settings.data.targetHint': 'Target root; use a roomy non-system drive.',
+    'settings.data.targetPlaceholder': 'E:\\DeepSeek-Harness-Data',
+    'settings.data.plan': 'Generate migration script',
+    'settings.data.planning': 'Generating…',
+    'settings.data.planFailed': 'Could not generate the migration script',
+    'settings.data.download': 'Download .ps1',
+    'settings.data.direct': 'Still on C:',
+    'settings.data.managed': 'Managed',
+    'settings.data.otherDrive': 'On another drive',
+    'settings.data.missing': 'Missing',
+    'settings.data.home': 'Home',
+    'settings.data.children': 'Home usage',
+    'settings.data.locations': 'Locations',
+    'settings.data.generated': '{count} migration action(s)',
+    'settings.data.warnings': 'Notes',
+    'settings.data.instructions': 'Steps',
+    'settings.data.free': '{free} free / {total}',
+    'settings.data.summary': 'Managed {managed} · unmanaged on C: {unmanaged}',
+    'settings.data.approxHint': '“≥” means the scan hit a time or entry cap; the real size is at least this and may be larger. Refresh to re-measure.',
+    'settings.data.cleanupHint': 'TEMP is cleaned, not junctioned: review a dry-run in a normal PowerShell first.',
+    'settings.data.cleanupDays': 'Older than (days)',
+    'settings.data.cleanup': 'Generate cleanup script',
+    'settings.data.cleaning': 'Generating…',
+    'settings.data.cleanupFailed': 'Could not generate the cleanup script',
+    'settings.data.cleanupSummary': 'Only dsh-* / dsh_* temp items older than {days} days; the script lists candidates by default.',
+    'settings.data.downloadCleanup': 'Download cleanup .ps1',
+    'settings.data.cat.harness-home': 'DSH home',
+    'settings.data.cat.desktop-profile': 'DSH desktop data',
+    'settings.data.cat.updater-cache': 'DSH updater cache',
+    'settings.data.cat.pnpm-store': 'pnpm global dir',
+    'settings.data.cat.pnpm-cache': 'pnpm cache',
+    'settings.data.cat.npm-cache': 'npm cache',
+    'settings.data.cat.temp': 'DSH temp folder',
+    'settings.data.cat.system-temp': 'System temp folder',
+    'settings.data.cat.profiles': 'profiles',
+    'settings.data.cat.sessions': 'sessions',
+    'settings.data.cat.attachments': 'attachments',
+    'settings.data.cat.cache': 'cache',
+    'settings.data.cat.logs': 'logs',
+    'settings.data.cat.dsh-runtimes': 'dsh-runtimes',
+    'settings.data.cat.speech-to-text': 'speech-to-text',
+    'settings.data.cat.storages': 'storages',
+    'settings.data.cat.skills': 'skills',
     'settings.shortcut.title': 'Shortcuts',
     'settings.shortcut.hint': 'Available while typing in the composer too; host bindings win on conflicts.',
     'settings.shortcut.palette': 'Command palette',
@@ -2126,7 +2224,10 @@ function stepPromptHistory(state, direction, prompts, currentText = '') {
 /**
  * dsh-claude-mode — scoped stylesheet.
  *
- * Every selector is namespaced with `.ccm-` so the host UI is untouched.
+ * Every plugin widget selector is namespaced with `.ccm-`. The one deliberate
+ * exception is the host sidebar scroll override, scoped by the host's
+ * `sidebarCol` class fragment so expanding plugin panels cannot hide the
+ * workspace; it is restored when the plugin context is destroyed.
  * Colors, radii, and elevations resolve through the active theme tokens, which
  * means the widgets follow the host theme (including when Claude mode is off
  * and the user is on a built-in theme).
@@ -2726,6 +2827,51 @@ const STYLES = `
   color: var(--dsw-alias-label-primary);
   box-shadow: var(--dsw-shadow-lv1);
 }
+/* Data & storage audit: read-only cards plus a downloadable migration plan. */
+.ccm-data { padding: 12px 14px 14px; gap: 10px; }
+.ccm-data-head { display: flex; align-items: flex-start; gap: 12px; }
+.ccm-data-head-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ccm-data-state { min-height: 18px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.ccm-data-home { display: flex; flex-direction: column; gap: 5px; padding: 10px 0 4px; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-home-head, .ccm-data-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ccm-data-home-head { justify-content: space-between; }
+.ccm-data-home-head .ccm-data-row-title { flex: 1 1 auto; }
+.ccm-data-cleanup { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-days { box-sizing: border-box; width: 68px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 5px 7px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.ccm-data-days:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.ccm-data-row { padding: 7px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-row:last-child { border-bottom: 0; }
+.ccm-data-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ccm-data-row-title { min-width: 0; overflow: hidden; color: var(--dsw-alias-label-primary); font-size: 13px; font-weight: 500; line-height: 19px; text-overflow: ellipsis; white-space: nowrap; }
+.ccm-data-row-right { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.ccm-data-paths { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.ccm-data-path { min-width: 0; max-width: 100%; overflow: hidden; color: var(--dsw-alias-label-tertiary); font-family: var(--dsh-font-mono, ui-monospace, monospace); font-size: 11px; line-height: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.ccm-data-arrow { color: var(--dsw-alias-label-caption); font-size: 11px; }
+.ccm-data-badge { flex: 0 0 auto; border-radius: 999px; padding: 2px 7px; font-size: 11px; line-height: 16px; white-space: nowrap; }
+.ccm-data-badge.is-managed { color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2); }
+.ccm-data-badge.is-direct { color: #a34a1f; background: rgba(215, 119, 87, 0.14); }
+.ccm-data-badge.is-other { color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2); }
+.ccm-data-badge.is-missing { color: var(--dsw-alias-label-caption); background: transparent; }
+.ccm-data-size { flex: 0 0 auto; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.ccm-data-drives { display: flex; flex-wrap: wrap; gap: 6px; }
+.ccm-data-drive { border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 2px 7px; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; }
+.ccm-data-subhead { margin-top: 4px; color: var(--dsw-alias-label-tertiary); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; line-height: 16px; text-transform: uppercase; }
+.ccm-data-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ccm-data-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 2px 6px; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; }
+.ccm-data-chip-value { color: var(--dsw-alias-label-caption); font-variant-numeric: tabular-nums; }
+.ccm-data-target { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.ccm-data-target-label { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-input { box-sizing: border-box; width: 100%; max-width: 520px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 6px 8px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.ccm-data-input:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.ccm-data-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ccm-data-plan-summary { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-plan-action { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-note { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-note strong { font-weight: 600; color: var(--dsw-alias-label-primary); }
+.ccm-data-steps { margin: 0; padding-left: 18px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-steps li { margin: 2px 0; }
+.ccm-data .ccm-btn { flex: 0 0 auto; }
+
 .ccm-settings-footer { display: flex; align-items: center; gap: 12px; }
 .ccm-btn {
   height: 30px;
@@ -2904,6 +3050,41 @@ const STYLES = `
 .ccm-panelmenu-hint { padding: 0 6px; font-size: 10.5px; line-height: 15px; color: var(--dsw-alias-label-caption); }
 
 /* ------------------------------------------------------------------ */
+/* Host sidebar: one scrolling column                                  */
+/* ------------------------------------------------------------------ */
+/* The host sidebar is a fixed-height flex column: its panel list can grow
+   past the viewport when many plugin icons are expanded, shrinking the
+   workspace/session region instead of scrolling. Keep the normal fill layout,
+   give the region a readable floor, and let the whole left column scroll once
+   the panel list makes the content taller than the viewport. */
+[class*="sidebarCol"] {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-border-l2, rgba(127, 127, 127, 0.35)) transparent;
+}
+[class*="sidebarCol"] > div > div:first-child {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+[class*="sidebarCol"] [class*="panelList"] { flex: 0 0 auto !important; }
+[class*="sidebarCol"] [class*="regionArea"] {
+  flex: 1 1 auto !important;
+  min-height: 280px !important;
+}
+[class*="sidebarCol"] [class*="footArea"] { flex: 0 0 auto !important; }
+[class*="sidebarCol"]::-webkit-scrollbar { width: 8px; height: 8px; }
+[class*="sidebarCol"]::-webkit-scrollbar-track { background: transparent; }
+[class*="sidebarCol"]::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l2, rgba(127, 127, 127, 0.35));
+  background-clip: padding-box;
+}
+[class*="sidebarCol"]::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-label-caption, rgba(127, 127, 127, 0.55)); background-clip: padding-box; }
+
+/* ------------------------------------------------------------------ */
 /* Motion                                                              */
 /* ------------------------------------------------------------------ */
 @keyframes ccm-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -2969,7 +3150,7 @@ const STYLES = `
  */
 
 /** Rendered plugin version (also shown in the Settings about card). */
-const VERSION = '1.0.0'
+const VERSION = '1.1.1'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -3170,6 +3351,72 @@ function requestAiPrompt(context, locale, localPrompt, signal) {
     const text = String(payload.prompt || '').trim()
     return text ? text.slice(0, AI_PROMPT_MAX) : ''
   })
+}
+
+/* ---------------------------------------------------------------------- */
+/* Data & storage audit                                                    */
+/* ---------------------------------------------------------------------- */
+
+const DATA_ROUTE = '/dsh-claude-mode/data'
+
+function requestSameOriginJson(url, options, timeoutMs) {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+    return Promise.reject(new Error('fetch unavailable'))
+  }
+  const controller = typeof AbortController === 'function' ? new AbortController() : null
+  const timer = controller ? window.setTimeout(function () { controller.abort() }, timeoutMs || 20000) : 0
+  const init = Object.assign({}, options || {}, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: Object.assign({ 'x-dsh-claude-mode': '1' }, (options && options.headers) || {}),
+    ...(controller ? { signal: controller.signal } : {}),
+  })
+  return window.fetch(url, init).then(function (response) {
+    if (!response.ok) throw new Error('HTTP ' + response.status)
+    return response.json()
+  }).then(function (payload) {
+    if (!payload || payload.ok !== true) throw new Error(String(payload && (payload.reason || payload.error) || 'request failed'))
+    return payload
+  }).finally(function () {
+    if (timer) window.clearTimeout(timer)
+  })
+}
+
+function requestDataAudit(force) {
+  return requestSameOriginJson(DATA_ROUTE + '/audit' + (force ? '?refresh=1' : ''), { method: 'GET' }, 20000)
+}
+
+function requestDataPlan(targetRoot) {
+  return requestSameOriginJson(DATA_ROUTE + '/plan', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ targetRoot: String(targetRoot || '') }),
+  }, 20000)
+}
+
+function requestDataCleanup(olderThanDays) {
+  return requestSameOriginJson(DATA_ROUTE + '/cleanup', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ olderThanDays: Number(olderThanDays) || 7 }),
+  }, 20000)
+}
+
+function downloadTextFile(filename, text) {
+  try {
+    const blob = new Blob(['\uFEFF' + String(text || '')], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = filename
+    anchor.style.display = 'none'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(function () { URL.revokeObjectURL(url) }, 1500)
+  } catch {
+    /* download is a convenience; the settings surface still shows the plan */
+  }
 }
 
 /**
@@ -5098,6 +5345,273 @@ function createPanelMenu(ctx, store, t) {
 /* Settings section                                                        */
 /* ---------------------------------------------------------------------- */
 
+/**
+ * Local data audit and migration-script panel.
+ *
+ * The Host endpoint is read-only. The panel only downloads a script; it never
+ * moves a live directory itself because DSH must be stopped for that step.
+ */
+function DataStorageSection(props) {
+  const t = props.t
+  const [audit, setAudit] = React.useState(null)
+  const [status, setStatus] = React.useState('loading')
+  const [error, setError] = React.useState('')
+  const [target, setTarget] = React.useState('E:\\DeepSeek-Harness-Data')
+  const [plan, setPlan] = React.useState(null)
+  const [planStatus, setPlanStatus] = React.useState('idle')
+  const [planError, setPlanError] = React.useState('')
+  const [cleanupDays, setCleanupDays] = React.useState(7)
+  const [cleanup, setCleanup] = React.useState(null)
+  const [cleanupStatus, setCleanupStatus] = React.useState('idle')
+  const [cleanupError, setCleanupError] = React.useState('')
+
+  const load = function (force) {
+    setStatus('loading')
+    setError('')
+    requestDataAudit(force).then(function (payload) {
+      setAudit(payload)
+      setStatus('ready')
+    }).catch(function (failure) {
+      setError(String(failure && failure.message ? failure.message : failure))
+      setStatus('error')
+    })
+  }
+
+  React.useEffect(function () {
+    load(false)
+  }, [])
+
+  const makePlan = function () {
+    setPlanStatus('loading')
+    setPlanError('')
+    requestDataPlan(target).then(function (payload) {
+      setPlan(payload)
+      setPlanStatus('ready')
+    }).catch(function (failure) {
+      setPlanError(String(failure && failure.message ? failure.message : failure))
+      setPlanStatus('error')
+    })
+  }
+
+  const makeCleanup = function () {
+    setCleanupStatus('loading')
+    setCleanupError('')
+    requestDataCleanup(cleanupDays).then(function (payload) {
+      setCleanup(payload)
+      setCleanupStatus('ready')
+    }).catch(function (failure) {
+      setCleanupError(String(failure && failure.message ? failure.message : failure))
+      setCleanupStatus('error')
+    })
+  }
+
+  const sizeLabel = function (entry) {
+    const value = entry && entry.bytesLabel ? entry.bytesLabel : '—'
+    return entry && entry.approx ? '≥ ' + value : value
+  }
+
+  const categoryLabel = function (entry) {
+    const key = entry && entry.systemTemp
+      ? 'settings.data.cat.system-temp'
+      : 'settings.data.cat.' + String(entry && entry.id || '')
+    try {
+      const translated = t(key)
+      if (translated && translated !== key) return translated
+    } catch {
+      /* ignore */
+    }
+    return String(entry && entry.label || entry && entry.id || '')
+  }
+
+  const categoryStatus = function (entry) {
+    if (!entry || !entry.exists) return { key: 'missing', label: t('settings.data.missing') }
+    if (entry.managed) return { key: 'managed', label: t('settings.data.managed') }
+    if (String(entry.drive || '').toUpperCase() === 'C:') return { key: 'direct', label: t('settings.data.direct') }
+    return { key: 'other', label: t('settings.data.otherDrive') }
+  }
+
+  const children = []
+  const categories = []
+  if (audit) {
+    if (audit.home) {
+      const homeStatus = categoryStatus(audit.home)
+      children.push(React.createElement('div', { key: 'home', className: 'ccm-data-home' }, [
+        React.createElement('div', { key: 'head', className: 'ccm-data-home-head' }, [
+          React.createElement('span', { key: 't', className: 'ccm-data-row-title' }, t('settings.data.home')),
+          React.createElement('span', { key: 's', className: 'ccm-data-badge is-' + homeStatus.key }, homeStatus.label),
+          React.createElement('span', { key: 'size', className: 'ccm-data-size' }, sizeLabel(audit.home)),
+        ]),
+        React.createElement('div', { key: 'paths', className: 'ccm-data-paths' }, [
+          React.createElement('code', { key: 'p', className: 'ccm-data-path' }, audit.home.path),
+          React.createElement('span', { key: 'arrow', className: 'ccm-data-arrow', 'aria-hidden': 'true' }, '→'),
+          React.createElement('code', { key: 'm', className: 'ccm-data-path' }, audit.home.physical),
+        ]),
+      ]))
+    }
+    if (Array.isArray(audit.drives)) {
+      children.push(React.createElement('div', { key: 'drives', className: 'ccm-data-drives' }, audit.drives.map(function (drive) {
+        return React.createElement('span', { key: drive.drive, className: 'ccm-data-drive' },
+          drive.drive + '  ' + format(t('settings.data.free'), { free: drive.freeLabel, total: drive.totalLabel }))
+      })))
+    }
+    children.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.summary'), {
+        managed: audit.managedLabel || '—',
+        unmanaged: audit.unmanagedLabel || '—',
+      })))
+    children.push(React.createElement('div', { key: 'approx-hint', className: 'ccm-settings-row-hint' }, t('settings.data.approxHint')))
+    if (Array.isArray(audit.categories)) {
+      categories.push(React.createElement('div', { key: 'cat-head', className: 'ccm-data-subhead' }, t('settings.data.locations')))
+      for (const entry of audit.categories) {
+        const state = categoryStatus(entry)
+        categories.push(React.createElement('div', { key: entry.id, className: 'ccm-data-row' }, [
+          React.createElement('div', { key: 'm', className: 'ccm-data-row-main' }, [
+            React.createElement('div', { key: 'title', className: 'ccm-data-row-title' }, categoryLabel(entry)),
+            React.createElement('code', { key: 'path', className: 'ccm-data-path', title: entry.path }, entry.path),
+          ]),
+          React.createElement('div', { key: 'right', className: 'ccm-data-row-right' }, [
+            React.createElement('span', { key: 'size', className: 'ccm-data-size' }, sizeLabel(entry)),
+            React.createElement('span', { key: 'state', className: 'ccm-data-badge is-' + state.key }, state.label),
+          ]),
+        ]))
+      }
+    }
+    if (Array.isArray(audit.children) && audit.children.length) {
+      categories.push(React.createElement('div', { key: 'children-head', className: 'ccm-data-subhead' }, t('settings.data.children')))
+      categories.push(React.createElement('div', { key: 'children', className: 'ccm-data-chips' }, audit.children.map(function (child) {
+        return React.createElement('span', { key: child.id, className: 'ccm-data-chip' }, [
+          React.createElement('span', { key: 'n' }, categoryLabel(child)),
+          React.createElement('span', { key: 'v', className: 'ccm-data-chip-value' }, sizeLabel(child)),
+        ])
+      })))
+    }
+  }
+
+  const planNode = []
+  if (plan) {
+    planNode.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.generated'), { count: plan.actions ? plan.actions.length : 0 })))
+    if (Array.isArray(plan.actions)) {
+      for (const action of plan.actions) {
+        planNode.push(React.createElement('div', { key: 'a-' + action.id, className: 'ccm-data-plan-action' }, [
+          React.createElement('span', { key: 'l', className: 'ccm-data-row-title' }, action.label || action.id),
+          React.createElement('code', { key: 'p', className: 'ccm-data-path' }, action.source + ' → ' + action.target),
+          React.createElement('span', { key: 's', className: 'ccm-data-size' }, sizeLabel(action)),
+        ]))
+      }
+    }
+    if (Array.isArray(plan.warnings) && plan.warnings.length) {
+      planNode.push(React.createElement('div', { key: 'warn', className: 'ccm-data-note' }, [
+        React.createElement('strong', { key: 't' }, t('settings.data.warnings') + '：'),
+        React.createElement('span', { key: 'b' }, plan.warnings.join(' ')),
+      ]))
+    }
+    if (Array.isArray(plan.instructions) && plan.instructions.length) {
+      planNode.push(React.createElement('ol', { key: 'steps', className: 'ccm-data-steps' }, plan.instructions.map(function (step, index) {
+        return React.createElement('li', { key: 's-' + index }, step)
+      })))
+    }
+    if (plan.script) {
+      planNode.push(React.createElement('button', {
+        key: 'download',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        onClick: function () { downloadTextFile('dsh-data-migration.ps1', plan.script) },
+      }, t('settings.data.download')))
+    }
+  }
+
+  const cleanupNode = []
+  if (cleanup) {
+    cleanupNode.push(React.createElement('div', { key: 'summary', className: 'ccm-data-plan-summary' },
+      format(t('settings.data.cleanupSummary'), { days: cleanup.olderThanDays })))
+    if (Array.isArray(cleanup.warnings) && cleanup.warnings.length) {
+      cleanupNode.push(React.createElement('div', { key: 'warn', className: 'ccm-data-note' }, [
+        React.createElement('strong', { key: 't' }, t('settings.data.warnings') + '：'),
+        React.createElement('span', { key: 'b' }, cleanup.warnings.join(' ')),
+      ]))
+    }
+    if (cleanup.script) {
+      cleanupNode.push(React.createElement('button', {
+        key: 'download',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        onClick: function () { downloadTextFile('dsh-temp-cleanup.ps1', cleanup.script) },
+      }, t('settings.data.downloadCleanup')))
+    }
+  }
+  const canClean = Boolean(audit && Array.isArray(audit.categories)
+    && audit.categories.some(function (entry) { return entry && entry.cleanable && entry.exists }))
+
+  return React.createElement('div', { key: 'data-storage', className: 'ccm-settings-group ccm-data' }, [
+    React.createElement('div', { key: 'head', className: 'ccm-data-head' }, [
+      React.createElement('div', { key: 'm', className: 'ccm-data-head-main' }, [
+        React.createElement('div', { key: 't', className: 'ccm-settings-row-title' }, t('settings.data.title')),
+        React.createElement('div', { key: 'h', className: 'ccm-settings-row-hint' }, t('settings.data.hint')),
+      ]),
+      React.createElement('button', {
+        key: 'refresh',
+        type: 'button',
+        className: 'ccm-btn ccm-btn-quiet',
+        disabled: status === 'loading',
+        onClick: function () { load(true) },
+      }, t('settings.data.refresh')),
+    ]),
+    React.createElement('div', { key: 'state', className: 'ccm-data-state', role: 'status', 'aria-live': 'polite' },
+      status === 'loading' ? t('settings.data.scanning') : status === 'error' ? t('settings.data.failed') + '：' + error : ''),
+    children,
+    categories,
+    React.createElement('div', { key: 'target', className: 'ccm-data-target' }, [
+      React.createElement('label', { key: 'l', className: 'ccm-data-target-label', htmlFor: 'ccm-data-target-input' }, t('settings.data.target')),
+      React.createElement('input', {
+        key: 'i',
+        id: 'ccm-data-target-input',
+        className: 'ccm-data-input',
+        value: target,
+        spellCheck: 'false',
+        onChange: function (event) { setTarget(event.target.value) },
+      }),
+      React.createElement('div', { key: 'hint', className: 'ccm-settings-row-hint' }, t('settings.data.targetHint')),
+    ]),
+    React.createElement('div', { key: 'actions', className: 'ccm-data-actions' }, [
+      React.createElement('button', {
+        key: 'plan',
+        type: 'button',
+        className: 'ccm-btn',
+        disabled: planStatus === 'loading' || !audit,
+        onClick: makePlan,
+      }, planStatus === 'loading' ? t('settings.data.planning') : t('settings.data.plan')),
+    ]),
+    planError ? React.createElement('div', { key: 'plan-error', className: 'ccm-data-note' }, t('settings.data.planFailed') + '：' + planError) : null,
+    planNode,
+    canClean ? React.createElement('div', { key: 'cleanup', className: 'ccm-data-cleanup' }, [
+      React.createElement('div', { key: 'h', className: 'ccm-data-target-label' }, t('settings.data.cleanupHint')),
+      React.createElement('div', { key: 'controls', className: 'ccm-data-actions' }, [
+        React.createElement('label', { key: 'l', className: 'ccm-data-target-label', htmlFor: 'ccm-data-cleanup-days' }, t('settings.data.cleanupDays')),
+        React.createElement('input', {
+          key: 'd',
+          id: 'ccm-data-cleanup-days',
+          className: 'ccm-data-days',
+          type: 'number',
+          min: 1,
+          max: 365,
+          value: cleanupDays,
+          onChange: function (event) { setCleanupDays(Number(event.target.value) || 7) },
+        }),
+        React.createElement('button', {
+          key: 'make',
+          type: 'button',
+          className: 'ccm-btn ccm-btn-quiet',
+          disabled: cleanupStatus === 'loading',
+          onClick: makeCleanup,
+        }, cleanupStatus === 'loading' ? t('settings.data.cleaning') : t('settings.data.cleanup')),
+      ]),
+      cleanupError ? React.createElement('div', { key: 'error', className: 'ccm-data-note' }, t('settings.data.cleanupFailed') + '：' + cleanupError) : null,
+      cleanupNode,
+    ]) : null,
+  ])
+}
+
 /** Build the Settings page component (registered into `settings.section`). */
 function createSettingsSection(ctx, store, t) {
   return function SettingsSection() {
@@ -5181,6 +5695,7 @@ function createSettingsSection(ctx, store, t) {
         row('ai-prompt', t('settings.aiPrompt.title'), t('settings.aiPrompt.hint'),
           toggle('ai-prompt-switch', settings.aiPrompt, function (next) { store.set({ aiPrompt: next }) }, t('settings.aiPrompt.title'))),
       ]),
+      React.createElement(DataStorageSection, { key: 'data-storage', t: t }),
       React.createElement('div', { key: 'shortcuts', className: 'ccm-settings-group' }, [
         row('sc-palette', t('settings.shortcut.palette'), t('settings.shortcut.hint'),
           React.createElement('span', { className: 'ccm-kv' }, React.createElement(Kbd, null, '⌃K'))),

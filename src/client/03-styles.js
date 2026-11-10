@@ -1,7 +1,10 @@
 /**
  * dsh-claude-mode — scoped stylesheet.
  *
- * Every selector is namespaced with `.ccm-` so the host UI is untouched.
+ * Every plugin widget selector is namespaced with `.ccm-`. The one deliberate
+ * exception is the host sidebar scroll override, scoped by the host's
+ * `sidebarCol` class fragment so expanding plugin panels cannot hide the
+ * workspace; it is restored when the plugin context is destroyed.
  * Colors, radii, and elevations resolve through the active theme tokens, which
  * means the widgets follow the host theme (including when Claude mode is off
  * and the user is on a built-in theme).
@@ -601,6 +604,51 @@ export const STYLES = `
   color: var(--dsw-alias-label-primary);
   box-shadow: var(--dsw-shadow-lv1);
 }
+/* Data & storage audit: read-only cards plus a downloadable migration plan. */
+.ccm-data { padding: 12px 14px 14px; gap: 10px; }
+.ccm-data-head { display: flex; align-items: flex-start; gap: 12px; }
+.ccm-data-head-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ccm-data-state { min-height: 18px; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 18px; }
+.ccm-data-home { display: flex; flex-direction: column; gap: 5px; padding: 10px 0 4px; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-home-head, .ccm-data-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ccm-data-home-head { justify-content: space-between; }
+.ccm-data-home-head .ccm-data-row-title { flex: 1 1 auto; }
+.ccm-data-cleanup { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-days { box-sizing: border-box; width: 68px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 5px 7px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.ccm-data-days:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.ccm-data-row { padding: 7px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-row:last-child { border-bottom: 0; }
+.ccm-data-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ccm-data-row-title { min-width: 0; overflow: hidden; color: var(--dsw-alias-label-primary); font-size: 13px; font-weight: 500; line-height: 19px; text-overflow: ellipsis; white-space: nowrap; }
+.ccm-data-row-right { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.ccm-data-paths { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.ccm-data-path { min-width: 0; max-width: 100%; overflow: hidden; color: var(--dsw-alias-label-tertiary); font-family: var(--dsh-font-mono, ui-monospace, monospace); font-size: 11px; line-height: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.ccm-data-arrow { color: var(--dsw-alias-label-caption); font-size: 11px; }
+.ccm-data-badge { flex: 0 0 auto; border-radius: 999px; padding: 2px 7px; font-size: 11px; line-height: 16px; white-space: nowrap; }
+.ccm-data-badge.is-managed { color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2); }
+.ccm-data-badge.is-direct { color: #a34a1f; background: rgba(215, 119, 87, 0.14); }
+.ccm-data-badge.is-other { color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2); }
+.ccm-data-badge.is-missing { color: var(--dsw-alias-label-caption); background: transparent; }
+.ccm-data-size { flex: 0 0 auto; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.ccm-data-drives { display: flex; flex-wrap: wrap; gap: 6px; }
+.ccm-data-drive { border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 2px 7px; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; }
+.ccm-data-subhead { margin-top: 4px; color: var(--dsw-alias-label-tertiary); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; line-height: 16px; text-transform: uppercase; }
+.ccm-data-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.ccm-data-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 2px 6px; color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 17px; }
+.ccm-data-chip-value { color: var(--dsw-alias-label-caption); font-variant-numeric: tabular-nums; }
+.ccm-data-target { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.ccm-data-target-label { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-input { box-sizing: border-box; width: 100%; max-width: 520px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; padding: 6px 8px; background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; line-height: 18px; }
+.ccm-data-input:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.ccm-data-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ccm-data-plan-summary { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-plan-action { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+.ccm-data-note { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-note strong { font-weight: 600; color: var(--dsw-alias-label-primary); }
+.ccm-data-steps { margin: 0; padding-left: 18px; color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 18px; }
+.ccm-data-steps li { margin: 2px 0; }
+.ccm-data .ccm-btn { flex: 0 0 auto; }
+
 .ccm-settings-footer { display: flex; align-items: center; gap: 12px; }
 .ccm-btn {
   height: 30px;
@@ -777,6 +825,41 @@ export const STYLES = `
 .ccm-panelmenu-bulkbtn:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
 .ccm-panelmenu-empty { padding: 8px 6px; font-size: 11.5px; color: var(--dsw-alias-label-caption); }
 .ccm-panelmenu-hint { padding: 0 6px; font-size: 10.5px; line-height: 15px; color: var(--dsw-alias-label-caption); }
+
+/* ------------------------------------------------------------------ */
+/* Host sidebar: one scrolling column                                  */
+/* ------------------------------------------------------------------ */
+/* The host sidebar is a fixed-height flex column: its panel list can grow
+   past the viewport when many plugin icons are expanded, shrinking the
+   workspace/session region instead of scrolling. Keep the normal fill layout,
+   give the region a readable floor, and let the whole left column scroll once
+   the panel list makes the content taller than the viewport. */
+[class*="sidebarCol"] {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-border-l2, rgba(127, 127, 127, 0.35)) transparent;
+}
+[class*="sidebarCol"] > div > div:first-child {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+[class*="sidebarCol"] [class*="panelList"] { flex: 0 0 auto !important; }
+[class*="sidebarCol"] [class*="regionArea"] {
+  flex: 1 1 auto !important;
+  min-height: 280px !important;
+}
+[class*="sidebarCol"] [class*="footArea"] { flex: 0 0 auto !important; }
+[class*="sidebarCol"]::-webkit-scrollbar { width: 8px; height: 8px; }
+[class*="sidebarCol"]::-webkit-scrollbar-track { background: transparent; }
+[class*="sidebarCol"]::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--dsw-alias-border-l2, rgba(127, 127, 127, 0.35));
+  background-clip: padding-box;
+}
+[class*="sidebarCol"]::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-label-caption, rgba(127, 127, 127, 0.55)); background-clip: padding-box; }
 
 /* ------------------------------------------------------------------ */
 /* Motion                                                              */

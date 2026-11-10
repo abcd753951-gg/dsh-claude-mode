@@ -336,13 +336,14 @@ checkAi('rate limit protects immediate distinct calls', rate1.status === 200 && 
 
 const aiFailed = aiChecks.filter((item) => !item.pass).length
 
-/* Static audit: local generator has no network; only fetch is the same-origin AI route. */
+/* Static audit: local generator has no network; every fetch is a same-origin plugin route. */
 const localSource = fs.readFileSync(path.join(root, 'src/client/02-state.js'), 'utf8')
 const componentSource = fs.readFileSync(path.join(root, 'src/client/04-components.js'), 'utf8')
 const localNetwork = /\b(fetch|XMLHttpRequest|WebSocket|EventSource)\s*\(/.test(localSource)
 const fetchSites = Array.from(componentSource.matchAll(/\bfetch\s*\(/g)).length
 const routeText = /const AI_PROMPT_ROUTE = '\/dsh-claude-mode\/ai-prompt'/.test(componentSource)
-const staticOk = !localNetwork && fetchSites === 1 && routeText
+const dataRouteText = /const DATA_ROUTE = '\/dsh-claude-mode\/data'/.test(componentSource)
+const staticOk = !localNetwork && fetchSites === 2 && routeText && dataRouteText
 
 const qualityChecks = {
   '每条建议都是完整草稿（长度、目标/验收信息）': results.every((row) => !row.actual || row.passed),
@@ -352,7 +353,7 @@ const qualityChecks = {
   '上下文预算有硬上限': hugeOk,
   'Chat 新鲜度检查': freshnessOk,
   '本地生成器无网络绑定': !localNetwork,
-  '唯一 fetch 指向同源 AI 路由': fetchSites === 1 && routeText,
+  '所有 fetch 都指向同源插件路由': fetchSites === 2 && routeText && dataRouteText,
 }
 
 const allPass = failed === 0 && aiFailed === 0 && Object.values(qualityChecks).every(Boolean)
