@@ -3150,7 +3150,7 @@ const STYLES = `
  */
 
 /** Rendered plugin version (also shown in the Settings about card). */
-const VERSION = '1.1.1'
+const VERSION = '1.1.2'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {

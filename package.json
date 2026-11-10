@@ -1,6 +1,6 @@
 {
   "name": "dsh-claude-mode",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Claude Code 风格的 Prompt Pilot：空输入框先给完整本地草稿，再由当前模型按会话上下文完善目标、范围、约束与验收方式；同一上下文只调用一次并复用缓存；Tab 接受后删除会重新出现。另含只读的数据与存储审计、迁移脚本和临时目录清理脚本。",
   "author": "dsh-claude-mode contributors",

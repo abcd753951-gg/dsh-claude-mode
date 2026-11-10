@@ -1,4 +1,4 @@
-# 验收记录：dsh-claude-mode 1.1.1
+# 验收记录：dsh-claude-mode 1.1.2
 
 - 验收时间：2026-11-08（Prompt Pilot）/ 2026-11-10（数据与存储）
 - 目录：`F:\dsh插件创造\workspace\dsh-claude-mode`
@@ -49,7 +49,7 @@ Prompt Pilot 评估（`docs/PROMPT-PILOT-EVAL.md`）：
 9. 快捷键表数据：三组、`↑↓ 历史`、`Alt+N 新建会话`、`Alt+B 侧边栏`。
 10. 组件渲染（React stub）：
     - 运行状态条、回合页脚、插件图标管理、设置页、朗读动作；
-    - Prompt Pilot 设置行与版本 `1.1.1`。
+    - Prompt Pilot 设置行与版本 `1.1.2`。
 11. 1.0.0 纯函数：
     - `extractNextStep`：`下一步：`/粗体/列表/编号/标题、分号截断、英文 `Next step:`、无显式下一步、同一回复取最后一条；
     - `buildPromptDraft`：下一步、提问、已完成、计划、改动、任务意图、标题、空态起始、陈旧回复忽略、running 返回 null；完整草稿长度和验收/风险信息；报错/工具错误/普通回答/空上下文/无下一步等所有已结束上下文都有非空完整草稿；
@@ -63,7 +63,8 @@ Prompt Pilot 评估（`docs/PROMPT-PILOT-EVAL.md`）：
     - `directorySize`：普通文件累加、子 junction 不跟随；`auditData`：存在性、字节数、主目录子项、C/E 盘余量；
     - `buildMigrationPlan`：已托管/缺失/不可迁移跳过、相对/重叠根拒绝、脚本含 robocopy/junction/进程检查、数组无尾逗号；
     - `buildCleanupPlan`：默认 dry-run、1..365 天边界、只取 cleanable TEMP、脚本只匹配 `dsh[-_]` 且不含 DSH home；生成的 PowerShell 另用 `Parser::ParseFile` 做语法检查（两个脚本均 OK）。
-13. 1.1.1 侧边栏滚动：`STYLES` 含 `sidebarCol` 整体 `overflow-y:auto`、内部根 `height:100%`、`regionArea` 280px 下限、`panelList` 不收缩；真实 Chromium 注入 12 个同结构插件行后，侧栏 `scrollHeight` 1050 > 720，滚到底时工作区与账号区可见。
+13. 1.1.x 侧边栏滚动：`STYLES` 含 `sidebarCol` 整体 `overflow-y:auto`、内部根 `height:100%`、`regionArea` 280px 下限、`panelList` 不收缩；真实 Chromium 注入 12 个同结构插件行后，侧栏 `scrollHeight` 1050 > 720，滚到底时工作区与账号区可见。
+14. 跨平台（1.1.2）：`test/unit/data.test.mjs` 的迁移计划夹具改为从 `os.tmpdir()` 的根推导绝对目标目录（Windows `C:\DSHData`、POSIX `/DSHData`），drives 断言只在临时根确有盘符时执行；`ubuntu-latest` 与 `windows-latest` 的 Node 24 CI 均 51/51 通过。
 
 ## 3. 数据审计实测（2026-11-10）
 
@@ -108,7 +109,7 @@ Prompt Pilot 评估（`docs/PROMPT-PILOT-EVAL.md`）：
 | 12 | 暗色主题 | 卡片背景 `rgb(29,29,29)`、正文 `rgb(242,242,242)`，对比度充足；标题/边框/页脚随令牌切换 |
 | 13 | 窄屏 | 375×812 下面板 x=8、宽 359、无横向溢出；正文 15px 可读，卡片高度随内容增长 |
 | 14 | 中屏 | 768×900 下宽 620、无横向溢出 |
-| 15 | 设置页 | 「AI 完善提示词」开关存在且可切换；说明文字含「同一上下文只调用一次并复用缓存」「关闭后只用本地模板」；版本 `1.1.1` |
+| 15 | 设置页 | 「AI 完善提示词」开关存在且可切换；说明文字含「同一上下文只调用一次并复用缓存」「关闭后只用本地模板」；版本 `1.1.2` |
 | 16 | 前缀补全回归 | 输入 `请审` 仍显示浅色尾文 ghost，`Tab` 接受后黑色正文；`/`、`@`、多行/菜单打开时不显示 |
 | 17 | 全流程 console | 插件自身 0 error、0 warning |
 | 18 | 数据审计 | `GET /dsh-claude-mode/data/audit` 200；8 个位置（含 system-temp）渲染；主目录 `已托管` 显示 C 逻辑路径 → E 物理路径；pnpm 两项在迁移后显示 `已托管`；C 3.11 GB / E 45.98 GB |

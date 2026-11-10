@@ -11,7 +11,7 @@
 import { assistantTextForMessage, buildPromptDraft, collectPromptHistory, completionWordFor, format, formatDuration, formatElapsed, hash32, mapPinnedSessions, mapSessionSearchResults, normalizePilotStats, openPalette, openShortcuts, PILOT_STATS_KEY, pickSpinnerVerb, playCompletionChime, promptContextFromChat, recordPilotEvent, runtime, SPINNER_REST_FRAME, spinnerFrame, splitSpeechText, stepPromptHistory, suggestPromptCompletion, suggestionSuppressed, subscribePalette, subscribeShortcuts } from './02-state.js'
 
 /** Rendered plugin version (also shown in the Settings about card). */
-export const VERSION = '1.1.1'
+export const VERSION = '1.1.2'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {

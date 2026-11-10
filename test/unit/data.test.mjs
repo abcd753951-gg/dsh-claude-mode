@@ -84,13 +84,23 @@ test('auditData reports sizes, children and drives without writing', async () =>
     assert.equal(categories['desktop-profile'].bytes, 8)
     const childNames = audit.children.map((entry) => entry.label)
     assert.deepEqual(childNames, ['profiles', 'sessions'])
-    assert.ok(audit.drives.some((drive) => drive.drive === path.parse(root).root.replace(/[\\/]+$/, '')))
+    // Drive letters only exist on Windows. On POSIX the audit intentionally
+    // reports no drives (the panels are Windows-oriented), so only assert the
+    // Windows mapping when the temp root actually has a drive.
+    const rootDrive = path.parse(root).root.replace(/[\\/]+$/, '')
+    if (rootDrive) {
+      assert.ok(audit.drives.some((drive) => drive.drive === rootDrive))
+    } else {
+      assert.deepEqual(audit.drives, [])
+    }
   } finally {
     await fs.rm(root, { recursive: true, force: true })
   }
 })
 
 test('migration plan only targets unmanaged, existing categories', () => {
+  // Absolute cross-platform target root: 'C:\\DSHData' on Windows, '/DSHData' on POSIX.
+  const targetRoot = path.join(path.parse(os.tmpdir()).root || path.sep, 'DSHData')
   const audit = {
     ok: true,
     categories: [
@@ -101,11 +111,11 @@ test('migration plan only targets unmanaged, existing categories', () => {
     ],
     unmanagedBytes: 20,
   }
-  const plan = buildMigrationPlan({ targetRoot: 'E:\\DSHData', audit })
+  const plan = buildMigrationPlan({ targetRoot, audit })
   assert.equal(plan.ok, true)
   assert.equal(plan.actions.length, 1)
   assert.equal(plan.actions[0].id, 'pnpm-cache')
-  assert.equal(plan.actions[0].target, path.join('E:\\DSHData', 'pnpm-cache'))
+  assert.equal(plan.actions[0].target, path.join(targetRoot, 'pnpm-cache'))
   assert.ok(plan.skipped.some((entry) => entry.id === 'harness-home' && entry.reason === 'already-managed'))
   assert.ok(plan.skipped.some((entry) => entry.id === 'npm-cache' && entry.reason === 'missing'))
   assert.match(plan.script, /robocopy/)
@@ -117,13 +127,14 @@ test('migration plan only targets unmanaged, existing categories', () => {
 
 test('migration plan rejects relative or overlapping roots', () => {
   assert.throws(() => normalizeTargetRoot('relative\\path'), /absolute/)
+  const targetRoot = path.join(path.parse(os.tmpdir()).root || path.sep, 'DSHData')
   const audit = {
     ok: true,
     categories: [
-      { id: 'pnpm-cache', label: 'pnpm', path: 'E:\\DSHData\\pnpm-cache', exists: true, managed: false, bytes: 1, drive: 'E:' },
+      { id: 'pnpm-cache', label: 'pnpm', path: path.join(targetRoot, 'pnpm-cache'), exists: true, managed: false, bytes: 1 },
     ],
   }
-  assert.throws(() => buildMigrationPlan({ targetRoot: 'E:\\DSHData', audit }), /overlaps/)
+  assert.throws(() => buildMigrationPlan({ targetRoot, audit }), /overlaps/)
 })
 
 test('PowerShell quoting and byte formatting are stable', () => {
