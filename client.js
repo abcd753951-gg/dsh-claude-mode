@@ -3150,7 +3150,7 @@ const STYLES = `
  */
 
 /** Rendered plugin version (also shown in the Settings about card). */
-const VERSION = '1.1.2'
+const VERSION = '1.1.3'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -3318,12 +3318,15 @@ function aiContextKey(context, locale, localPrompt) {
   ].join('|'))
 }
 
-function requestAiPrompt(context, locale, localPrompt, signal) {
+function requestAiPrompt(context, locale, localPrompt, signal, sessionId) {
   if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
     return Promise.reject(new Error('fetch unavailable'))
   }
   const body = {
     locale: String(locale || 'zh-CN'),
+    // Let the Host route this auxiliary call through the live Session model
+    // instead of the deployment default.
+    sessionId: String(sessionId || '').slice(0, 128),
     context: {
       sessionTitle: String(context && context.sessionTitle || '').slice(0, 160),
       lastUserPrompt: String(context && context.lastUserPrompt || '').slice(-1600),
@@ -3646,7 +3649,13 @@ function createGhostSuggestion(ctx, store, t, getLocale) {
         aiRequestTimer = window.setTimeout(function () {
           if (controller) controller.abort()
         }, 20000)
-        requestAiPrompt(context, getLocale(), suggestion.full, controller ? controller.signal : undefined)
+        requestAiPrompt(
+          context,
+          getLocale(),
+          suggestion.full,
+          controller ? controller.signal : undefined,
+          props.sessionId || runtime.sessionId,
+        )
           .then(function (prompt) {
             if (!prompt) {
               recordFailure()

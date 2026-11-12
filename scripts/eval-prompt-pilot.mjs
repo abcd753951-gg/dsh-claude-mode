@@ -25,7 +25,7 @@ import {
   recordPilotEvent,
   suggestionSuppressed,
 } from '../src/client/02-state.js'
-import { apply as applyHost } from '../index.js'
+import { AI_PROMPT_MAX_TOKENS, apply as applyHost } from '../index.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const localeZh = 'zh-CN'
@@ -186,9 +186,11 @@ function createHarness(options = {}) {
     })()
   }
   const llm = {
-    async prepareCall(config) {
+    async prepareCall(config, _signal, configure) {
+      const controls = configure ? configure(config, options.modelInfo || {}) : config
+      const resolved = Object.freeze({ ...config, ...controls, provider: config.provider, model: config.model })
       return {
-        config,
+        config: resolved,
         stream(callOptions) {
           captured.calls.push(callOptions)
           if (options.throwOnStream) throw new Error(options.throwOnStream)
@@ -268,7 +270,7 @@ const okPayload = JSON.parse(ok.body)
 const okCall = okHarness.captured.calls[0]
 checkAi('valid call returns a prompt', ok.status === 200 && okPayload.ok === true && okPayload.prompt.length > 20)
 checkAi('auth gate and route registered', Boolean(okHarness.captured.route) && okHarness.captured.route.path === '/dsh-claude-mode/ai-prompt')
-checkAi('bounded output budget', okCall && okCall.maxTokens === 650)
+checkAi('bounded output budget', okCall && okCall.maxTokens === AI_PROMPT_MAX_TOKENS, 'maxTokens=' + (okCall && okCall.maxTokens))
 checkAi('no tools on the suggestion call', okCall && okCall.tools === undefined)
 checkAi('system instructs a full prompt, not a short phrase', okCall && /完整|目标|验收/.test(okCall.system) && /SKIP/.test(okCall.system))
 checkAi('conversation context reaches the model', okCall && /金融数据插件/.test(okCall.messages[0].content[0].text))
@@ -384,7 +386,7 @@ const report = [
   `- 5000 次本地草稿生成：${benchmarkMs.toFixed(1)} ms，平均 ${(benchmarkMs / 5000).toFixed(3)} ms，p95 ${p95.toFixed(3)} ms`,
   `- 超长上下文调用：${hugeMs.toFixed(3)} ms，返回长度 ${hugeResult ? hugeResult.full.length : 0}，上限检查：${hugeOk ? 'PASS' : 'FAIL'}`,
   `- 本地上下文硬上限：assistant=${PROMPT_PILOT_BUDGET.assistant} 字符，tool=${PROMPT_PILOT_BUDGET.tool} 字符，lastUser=${PROMPT_PILOT_BUDGET.lastUser} 字符，title=${PROMPT_PILOT_BUDGET.title} 字符`,
-  '- 本地草稿：0 模型 token、0 网络调用；只有启用 AI 完善且同上下文缓存未命中时才发一次请求，输出预算 650 tokens。',
+  `- 本地草稿：0 模型 token、0 网络调用；只有启用 AI 完善且同上下文缓存未命中时才发一次请求，输出预算 ${AI_PROMPT_MAX_TOKENS} tokens（最低推理强度；思考占满且无文本时翻倍重试一次，上限 4096）。`,
   '',
   '## Host AI 路由合约（fake llm，无网络）',
   '',

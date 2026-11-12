@@ -810,7 +810,7 @@ test('settings section exposes both prompt-pilot switches and version', () => {
     assert.match(text, /同一上下文只调用一次/)
     assert.match(text, /数据与存储/)
     assert.match(text, /不会移动正在使用的数据/)
-    assert.match(text, /1\.1\.2/)
+    assert.match(text, /1\.1\.3/)
   })
 })
 

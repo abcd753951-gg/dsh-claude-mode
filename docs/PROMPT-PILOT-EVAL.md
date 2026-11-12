@@ -1,6 +1,6 @@
 # Prompt Pilot 完整评估
 
-- 生成时间：2026-11-10T00:43:39.525Z
+- 生成时间：2026-11-12T05:25:23.627Z
 - Node：v24.14.1
 - 命令：`node scripts/eval-prompt-pilot.mjs`
 - 结果：**PASS**
@@ -56,10 +56,10 @@
 
 ## 本地性能与预算
 
-- 5000 次本地草稿生成：32.9 ms，平均 0.007 ms，p95 0.010 ms
-- 超长上下文调用：0.584 ms，返回长度 74，上限检查：PASS
+- 5000 次本地草稿生成：101.0 ms，平均 0.020 ms，p95 0.030 ms
+- 超长上下文调用：1.441 ms，返回长度 74，上限检查：PASS
 - 本地上下文硬上限：assistant=4000 字符，tool=1600 字符，lastUser=1200 字符，title=120 字符
-- 本地草稿：0 模型 token、0 网络调用；只有启用 AI 完善且同上下文缓存未命中时才发一次请求，输出预算 650 tokens。
+- 本地草稿：0 模型 token、0 网络调用；只有启用 AI 完善且同上下文缓存未命中时才发一次请求，输出预算 1600 tokens（最低推理强度；思考占满且无文本时翻倍重试一次，上限 4096）。
 
 ## Host AI 路由合约（fake llm，无网络）
 
@@ -71,7 +71,7 @@
 | empty context returns no suggestion without a model call | PASS |  |
 | valid call returns a prompt | PASS |  |
 | auth gate and route registered | PASS |  |
-| bounded output budget | PASS |  |
+| bounded output budget | PASS | maxTokens=1600 |
 | no tools on the suggestion call | PASS |  |
 | system instructs a full prompt, not a short phrase | PASS |  |
 | conversation context reaches the model | PASS |  |

@@ -3,9 +3,11 @@
  *
  * The UI lives in the Client half. This Host row adds one same-origin route used
  * by the optional "AI 完善提示词" flow. It reads the current conversation only
- * through the context the browser posts, calls the Host `llm` service with a
- * bounded output budget, and never registers tools, prompts, or background
- * work in the user's Agent.
+ * through the context the browser posts, routes the call through the live
+ * Session model (falling back to the deployment default), calls the Host `llm`
+ * service with a bounded output budget and the lowest reasoning effort the route
+ * advertises, and never registers tools, prompts, or background work in the
+ * user's Agent.
  */
 
 import { createHash } from 'node:crypto'
@@ -26,6 +28,12 @@ const CACHE_TTL_MS = 10 * 60 * 1000
 const DATA_CACHE_TTL_MS = 30 * 1000
 const CACHE_MAX = 32
 const MAX_PROMPT_CHARS = 1200
+const AI_SESSION_ID_MAX = 128
+/** Bounded suggestion budget; doubled once when thinking consumed the output. */
+export const AI_PROMPT_MAX_TOKENS = 1600
+export const AI_PROMPT_MAX_TOKENS_CAP = 4096
+const AI_PROMPT_TIMEOUT_MS = 25000
+const AI_PROMPT_TEMPERATURE = 0.4
 
 /** The Host row stays inert until the web carrier appears. */
 export function apply(ctx) {
@@ -103,12 +111,12 @@ function createHandler(webCtx, llm, defaultModel, cache, allowCall) {
       sendJson(res, 200, { ok: true, prompt: null, reason: 'empty-context' })
       return
     }
-    const selection = safeSelection(defaultModel)
-    if (!selection || !selection.provider || !selection.model) {
+    const selection = resolvePromptSelection(webCtx, defaultModel, input.sessionId)
+    if (!selection) {
       sendJson(res, 200, { ok: true, prompt: null, reason: 'no-model' })
       return
     }
-    const key = createHash('sha256').update(JSON.stringify({ input, selection })).digest('hex')
+    const key = promptCacheKey(input, selection)
     const cached = cache.get(key)
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
       sendJson(res, 200, { ok: true, prompt: cached.prompt, model: cached.model, cached: true, usage: cached.usage })
@@ -135,10 +143,11 @@ function createHandler(webCtx, llm, defaultModel, cache, allowCall) {
         cached: false,
       })
     } catch (error) {
+      const reason = mapAiFailureReason(error)
       if (webCtx && webCtx.logger && typeof webCtx.logger.warn === 'function') {
-        webCtx.logger.warn('[dsh-claude-mode] AI prompt generation failed: ' + messageOf(error))
+        webCtx.logger.warn('[dsh-claude-mode] AI prompt generation failed: ' + reason)
       }
-      sendJson(res, 200, { ok: false, error: 'generation failed', reason: messageOf(error) })
+      sendJson(res, 200, { ok: false, error: 'generation failed', reason })
     }
   }
 }
@@ -303,6 +312,7 @@ function normalizeInput(body) {
   return {
     locale,
     chinese,
+    sessionId: clip(source.sessionId, AI_SESSION_ID_MAX),
     sessionTitle: clip(context.sessionTitle, 160),
     lastUserPrompt: clip(context.lastUserPrompt, 1400),
     assistantText: clip(context.assistantText, 3600),
@@ -317,18 +327,55 @@ function clip(value, max) {
   return text.slice(0, Math.max(0, max))
 }
 
+/** Detach one provider/model selection, or null when it cannot route. */
+function normalizeSelection(selection) {
+  if (!selection || typeof selection !== 'object') return null
+  const provider = String(selection.provider || '')
+  const model = String(selection.model || '')
+  if (!provider || !model) return null
+  return {
+    provider,
+    model,
+    ...(selection.reasoningEffort ? { reasoningEffort: String(selection.reasoningEffort) } : {}),
+  }
+}
+
 function safeSelection(defaultModel) {
   try {
-    const selection = defaultModel.currentSelection()
-    if (!selection || typeof selection !== 'object') return null
-    return {
-      provider: String(selection.provider || ''),
-      model: String(selection.model || ''),
-      ...(selection.reasoningEffort ? { reasoningEffort: selection.reasoningEffort } : {}),
-    }
+    return normalizeSelection(defaultModel.currentSelection())
   } catch {
     return null
   }
+}
+
+/**
+ * Pick the route for one suggestion call.
+ *
+ * The live Agent's current model wins so a Session that switched models also
+ * switches this auxiliary call; without a live Agent (or before it records a
+ * selection) the deployment default keeps the old behavior.
+ */
+export function resolvePromptSelection(webCtx, defaultModel, sessionId) {
+  const live = liveSessionSelection(webCtx, sessionId)
+  return live || safeSelection(defaultModel)
+}
+
+function liveSessionSelection(webCtx, sessionId) {
+  if (!sessionId || !webCtx || typeof webCtx.get !== 'function') return null
+  try {
+    const agents = webCtx.get('agents')
+    if (!agents || typeof agents.get !== 'function') return null
+    const agent = agents.get(sessionId)
+    if (!agent || !agent.model || typeof agent.model.current !== 'function') return null
+    return normalizeSelection(agent.model.current())
+  } catch {
+    return null
+  }
+}
+
+/** Cache identity: one entry per Session, route and bounded context. */
+export function promptCacheKey(input, selection) {
+  return createHash('sha256').update(JSON.stringify({ input, selection })).digest('hex')
 }
 
 function trimCache(cache) {
@@ -348,6 +395,104 @@ function trimCache(cache) {
 
 function messageOf(error) {
   return String(error && error.message ? error.message : error).slice(0, 500)
+}
+
+/** Lowest selectable reasoning effort advertised for one exact model route. */
+export function lowestReasoningEffort(modelInfo) {
+  const reasoning = modelInfo && modelInfo.reasoning
+  const efforts = reasoning && Array.isArray(reasoning.efforts) ? reasoning.efforts : []
+  const id = efforts[0] && efforts[0].id
+  return typeof id === 'string' && id ? id : ''
+}
+
+/** Double one output budget once, never beyond the cap. */
+export function nextPromptBudget(maxTokens) {
+  const current = Number.isFinite(maxTokens) && maxTokens > 0 ? maxTokens : AI_PROMPT_MAX_TOKENS
+  return Math.min(Math.round(current * 2), AI_PROMPT_MAX_TOKENS_CAP)
+}
+
+/** Map stable Host LLM failure codes to one actionable sentence. */
+export function mapAiFailureReason(value) {
+  const code = String(value && value.code ? value.code : '')
+  const message = messageOf(value)
+  const detail = code + '\n' + message
+  if (/UNKNOWN_MODEL/.test(detail) || /no configured model/i.test(message)) {
+    return 'provider 未配置该模型，检查 cordis.patch.yml 的 llm-pi-ai models[]'
+  }
+  if (/NO_ADAPTER/.test(detail) || /no adapter registered/i.test(message)) {
+    return 'provider 未注册，检查 llm-pi-ai providers'
+  }
+  if (/UNSUPPORTED_REASONING_EFFORT/.test(detail) || /does not support reasoning effort/i.test(message)) {
+    return '模型不支持该推理强度，已回退默认'
+  }
+  return message
+}
+
+function isTemperatureFailure(error) {
+  return /temperature|unsupported/i.test(messageOf(error))
+}
+
+function failureToError(failure, kind) {
+  const source = failure && typeof failure === 'object' ? failure : {}
+  const error = new Error(String(source.message || kind || 'model call failed'))
+  if (source.code) error.code = String(source.code)
+  if (source.status) error.status = source.status
+  return error
+}
+
+/** Keep the caller's controls and pin the lowest advertised reasoning effort. */
+function configureLowestEffort(controls, modelInfo) {
+  const effort = lowestReasoningEffort(modelInfo)
+  return effort ? { ...controls, reasoningEffort: effort } : { ...controls }
+}
+
+/**
+ * Execute one prompt attempt against the exact prepared route.
+ *
+ * @returns the assembled text, usage and finish reason, or the failure.
+ */
+async function runPromptAttempt(llm, selection, request) {
+  try {
+    const callConfig = {
+      provider: selection.provider,
+      model: selection.model,
+      maxTokens: request.maxTokens,
+      ...(request.temperature === undefined ? {} : { temperature: request.temperature }),
+    }
+    const prepared = typeof llm.prepareCall === 'function'
+      ? await llm.prepareCall(callConfig, AbortSignal.timeout(AI_PROMPT_TIMEOUT_MS), configureLowestEffort)
+      : null
+    const base = prepared && prepared.config ? prepared.config : callConfig
+    const maxTokens = Number.isFinite(base.maxTokens) ? base.maxTokens : request.maxTokens
+    const temperature = Number.isFinite(base.temperature) ? base.temperature : request.temperature
+    const options = {
+      ...base,
+      provider: selection.provider,
+      model: selection.model,
+      system: request.system,
+      messages: [{ role: 'user', content: [{ type: 'text', text: request.user }] }],
+      maxTokens,
+      ...(temperature === undefined ? {} : { temperature }),
+      purpose: 'claude-mode-prompt-suggestion',
+      signal: AbortSignal.timeout(AI_PROMPT_TIMEOUT_MS),
+    }
+    const text = []
+    let usage = null
+    let finish = null
+    const stream = prepared ? prepared.stream(options) : llm.stream(options)
+    for await (const chunk of stream) {
+      if (!chunk || typeof chunk !== 'object') continue
+      if (chunk.type === 'text-delta' && typeof chunk.text === 'string') text.push(chunk.text)
+      else if (chunk.type === 'usage') usage = chunk.usage
+      else if (chunk.type === 'finish') finish = chunk.reason
+    }
+    if (finish && (finish.kind === 'error' || finish.kind === 'aborted')) {
+      return { ok: false, error: failureToError(finish.failure, finish.kind) }
+    }
+    return { ok: true, text: text.join(''), usage, finish, maxTokens }
+  } catch (error) {
+    return { ok: false, error }
+  }
 }
 
 /** Ask the Host model for one complete next prompt, bounded and tool-free. */
@@ -384,51 +529,37 @@ async function generatePrompt(llm, selection, input) {
         'Latest tool result: ' + (input.toolText || '(none)'),
         'Local draft (rewrite; do not copy verbatim): ' + (input.localPrompt || '(none)'),
       ].join('\n')
-  const callConfig = {
-    provider: selection.provider,
-    model: selection.model,
-    maxTokens: 650,
-    temperature: 0.4,
+  const request = { system, user, maxTokens: AI_PROMPT_MAX_TOKENS, temperature: AI_PROMPT_TEMPERATURE }
+  let attempt = await runPromptAttempt(llm, selection, request)
+  if (!attempt.ok && isTemperatureFailure(attempt.error)) {
+    // Some reasoning routes reject any explicit temperature. Keep the prompt
+    // request, drop the sampling control and retry once.
+    request.temperature = undefined
+    attempt = await runPromptAttempt(llm, selection, request)
   }
-  const prepared = typeof llm.prepareCall === 'function'
-    ? await llm.prepareCall(callConfig, AbortSignal.timeout(25000))
-    : null
-  const base = prepared && prepared.config ? prepared.config : callConfig
-  const options = {
-    ...base,
-    provider: selection.provider,
-    model: selection.model,
-    system,
-    messages: [{ role: 'user', content: [{ type: 'text', text: user }] }],
-    maxTokens: Number.isFinite(base.maxTokens) ? base.maxTokens : 650,
-    temperature: Number.isFinite(base.temperature) ? base.temperature : 0.4,
-    purpose: 'claude-mode-prompt-suggestion',
-    signal: AbortSignal.timeout(25000),
+  if (!attempt.ok) throw attempt.error
+  if (attempt.finish && attempt.finish.kind === 'max-tokens' && !attempt.text) {
+    // A thinking model can spend the whole budget before emitting visible
+    // text. Retry once with the lowest effort (already pinned) and a doubled
+    // budget instead of silently falling back to the local draft.
+    const budget = nextPromptBudget(attempt.maxTokens)
+    if (budget > attempt.maxTokens) {
+      request.maxTokens = budget
+      attempt = await runPromptAttempt(llm, selection, request)
+      if (!attempt.ok) throw attempt.error
+    }
   }
-  const text = []
-  let usage = null
-  let finish = null
-  const stream = prepared ? prepared.stream(options) : llm.stream(options)
-  for await (const chunk of stream) {
-    if (!chunk || typeof chunk !== 'object') continue
-    if (chunk.type === 'text-delta' && typeof chunk.text === 'string') text.push(chunk.text)
-    else if (chunk.type === 'usage') usage = chunk.usage
-    else if (chunk.type === 'finish') finish = chunk.reason
-  }
-  if (finish && (finish.kind === 'error' || finish.kind === 'aborted')) {
-    throw new Error(finish.failure && finish.failure.message ? finish.failure.message : finish.kind)
-  }
-  if (finish && finish.kind === 'max-tokens' && text.length === 0) {
+  if (attempt.finish && attempt.finish.kind === 'max-tokens' && !attempt.text) {
     return { prompt: null, reason: 'reasoning-consumed-output' }
   }
-  const cleaned = cleanModelPrompt(text.join(''))
+  const cleaned = cleanModelPrompt(attempt.text)
   if (!cleaned || /^SKIP\b/i.test(cleaned)) return { prompt: null, reason: 'model-skipped' }
   // A model can still return a terse phrase despite the system instruction.
   // Treat that as "no AI improvement" so the client keeps its complete local
   // draft instead of replacing it with a short sentence.
   const enough = input.chinese ? cleaned.length >= 40 : cleaned.split(/\s+/).filter(Boolean).length >= 18
   if (!enough) return { prompt: null, reason: 'too-short' }
-  return { prompt: cleaned, usage }
+  return { prompt: cleaned, usage: attempt.usage }
 }
 
 function cleanModelPrompt(value) {
