@@ -133,7 +133,7 @@ node --check index.js && node --check client.js
 
 ## Compatibility
 
-- Verified on **DSH 0.2.2-rc.1** (Desktop) and **0.1.2-rc.1** (`dsh web`); the turn footer registers under both slot declarations.
+- Verified on **DSH 0.2.2-rc.3** (Desktop) and **0.1.2-rc.1** (`dsh web`); the turn footer registers under both slot declarations.
 - Every dependency is a public slot or service. If a host rename happens, the affected widget degrades (disappears) instead of breaking the host.
 
 ## License

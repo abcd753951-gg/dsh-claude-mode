@@ -1,5 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+
+const VERSION = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version
 
 import {
   DARK_TOKENS,
@@ -810,7 +813,7 @@ test('settings section exposes both prompt-pilot switches and version', () => {
     assert.match(text, /同一上下文只调用一次/)
     assert.match(text, /数据与存储/)
     assert.match(text, /不会移动正在使用的数据/)
-    assert.match(text, /1\.1\.3/)
+    assert.ok(text.includes(VERSION))
   })
 })
 

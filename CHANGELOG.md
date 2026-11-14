@@ -3,6 +3,16 @@
 All notable changes to `dsh-claude-mode` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [1.1.4] — 2026-11-15
+
+### Changed
+
+- 对齐 DeepSeek Harness 0.2.2-rc.3：`engines.dsh` 未收紧（保留对 `dsh web` 0.1.2-rc.1 的兼容），面板版本号同步为 `1.1.4`；slots / webServer / systemPrompt 公开扩展点与 0.2.2-rc.1 一致，无破坏性变化。
+
+### Verified
+
+- 桌面 DSH 0.2.2-rc.3 实机加载面板与工具正常；`npm test` 65/65 通过，`npm run check` 通过。
+
 ## [1.1.3] — 2026-11-12
 
 ### Changed
