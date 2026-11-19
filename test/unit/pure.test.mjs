@@ -150,8 +150,8 @@ test('normalizeSettings clamps unknown values onto defaults', () => {
   assert.deepEqual(normalizeSettings(undefined), DEFAULT_SETTINGS)
   assert.deepEqual(normalizeSettings({}), DEFAULT_SETTINGS)
   assert.deepEqual(
-    normalizeSettings({ enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false }),
-    { enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false },
+    normalizeSettings({ enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false, dedupeBrand: false, dedupeGlyphs: false, dedupeUnpin: false, stablePanels: false }),
+    { enabled: false, theme: 'light', statusBar: false, turnFooter: false, animations: false, sound: true, ghost: false, ghostContext: false, aiPrompt: false, dedupeBrand: false, dedupeGlyphs: false, dedupeUnpin: false, stablePanels: false },
   )
   assert.equal(normalizeSettings(undefined).aiPrompt, true)
   const coerced = normalizeSettings({ theme: 'neon', enabled: 1, animation: 0 })
@@ -813,6 +813,11 @@ test('settings section exposes both prompt-pilot switches and version', () => {
     assert.match(text, /同一上下文只调用一次/)
     assert.match(text, /数据与存储/)
     assert.match(text, /不会移动正在使用的数据/)
+    assert.match(text, /品牌行不再新建会话/)
+    assert.match(text, /右侧栏图标区分/)
+    assert.match(text, /取消固定按钮悬浮显示/)
+    assert.match(text, /面板图标顺序稳定/)
+    assert.match(text, /重启后可能换位/)
     assert.ok(text.includes(VERSION))
   })
 })

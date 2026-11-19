@@ -148,6 +148,15 @@ export const DICTIONARIES = {
     'settings.ghost.hint': '输入框为空时显示完整提示词建议；输入前缀时在光标后补全尾文。按 Tab 接受，Esc 收起，继续输入或失焦会自动收起。',
     'settings.ghostContext.title': '空输入框上下文推荐',
     'settings.ghostContext.hint': '只在输入框为空时生效：读取最新回复、最近提示词与会话标题。开启 AI 完善时交给当前模型生成完整提示词；关闭后只用本地模板。关闭本项后只保留前缀补全。',
+    'settings.shell.title': '外壳去重',
+    'settings.dedupeBrand.title': '品牌行不再新建会话',
+    'settings.dedupeBrand.hint': '侧边栏顶部的品牌行本来整行都是「新建会话」按钮，和下一行的新建会话按钮重复。开启后品牌行只作展示，点版本号仍可复制版本。',
+    'settings.dedupeGlyphs.title': '右侧栏图标区分',
+    'settings.dedupeGlyphs.hint': '右侧栏的展开与收起按钮原本复用左侧栏折叠按钮的图标，只靠镜像区分方向。开启后转 180°，和左侧栏一眼分开。',
+    'settings.dedupeUnpin.title': '取消固定按钮悬浮显示',
+    'settings.dedupeUnpin.hint': '每个面板图标行常驻一个「取消固定」按钮，和「更多」菜单里的固定开关重复。开启后只在悬停该行时出现。',
+    'settings.stablePanels.title': '面板图标顺序稳定',
+    'settings.stablePanels.hint': '宿主只按 order 排序，多个插件用了相同数值（24 / 26 / 30），并列时按注册顺序排，重启后可能换位。开启后并列项按面板 id 固定，顺序不再漂移。',
     'settings.aiPrompt.title': 'AI 完善提示词',
     'settings.aiPrompt.hint': '把最近回复、最近提示词与会话标题交给当前模型，生成一条目标、范围、约束和验收方式更完整的下一步提示词。同一上下文只调用一次并复用缓存；关闭后不发起模型调用。',
     'ghost.ai.pending': 'AI 正在完善提示词…',
@@ -358,6 +367,15 @@ export const DICTIONARIES = {
     'settings.ghost.hint': 'With an empty composer, show a complete prompt suggestion; with a typed prefix, complete the rest. Press Tab to accept, Esc to dismiss, or keep typing / blur to dismiss.',
     'settings.ghostContext.title': 'Empty-composer context suggestions',
     'settings.ghostContext.hint': 'Only applies while the composer is empty: reads the latest reply, recent prompts, and Session title. With AI completion on, the current model writes a full prompt; otherwise a local template is used. Turn this off to keep prefix completion only.',
+    'settings.shell.title': 'Shell de-duplication',
+    'settings.dedupeBrand.title': 'Brand row stops starting Sessions',
+    'settings.dedupeBrand.hint': 'The sidebar brand row was itself a New Session button, duplicating the New Session row right below it. With this on the brand row is display only; clicking the version still copies it.',
+    'settings.dedupeGlyphs.title': 'Distinct right-column glyphs',
+    'settings.dedupeGlyphs.hint': 'The right column expand/collapse buttons reused the left rail collapse icon, distinguished only by a mirror flip. With this on they turn 180° and read as the opposite edge at a glance.',
+    'settings.dedupeUnpin.title': 'Unpin only on hover',
+    'settings.dedupeUnpin.hint': 'Every panel row carried a permanent unpin button, duplicating the pin switch inside the More menu. With this on it appears only while the row is hovered.',
+    'settings.stablePanels.title': 'Stable panel order',
+    'settings.stablePanels.hint': 'The host sorts panels by order alone, and several plugins registered the same value (24 / 26 / 30); ties then follow registration order and can swap across restarts. With this on ties break by panel id, so the rail stops drifting.',
     'settings.aiPrompt.title': 'AI prompt completion',
     'settings.aiPrompt.hint': 'Sends the latest reply, recent prompts, and Session title to the current model to write a fuller next prompt with goal, scope, constraints, and acceptance checks. One call per context, then cached; turn this off to avoid model calls.',
     'ghost.ai.pending': 'AI is completing the prompt…',
@@ -657,6 +675,10 @@ export const DEFAULT_SETTINGS = Object.freeze({
   ghost: true,
   ghostContext: true,
   aiPrompt: true,
+  dedupeBrand: true,
+  dedupeGlyphs: true,
+  dedupeUnpin: true,
+  stablePanels: true,
 })
 
 /** Clamp one stored settings object into the known shape. */
@@ -673,6 +695,10 @@ export function normalizeSettings(input) {
     ghost: source.ghost !== false,
     ghostContext: source.ghostContext !== false,
     aiPrompt: source.aiPrompt !== false,
+    dedupeBrand: source.dedupeBrand !== false,
+    dedupeGlyphs: source.dedupeGlyphs !== false,
+    dedupeUnpin: source.dedupeUnpin !== false,
+    stablePanels: source.stablePanels !== false,
   }
 }
 

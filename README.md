@@ -31,6 +31,7 @@
 | 会话标题栏按钮 | `conversation.session.header.utilities` | 右上角 `✻` 按钮打开命令面板，运行中显示强调色。 |
 | 设置页 | `settings.section` + `settings.section.icon` | 「Claude 模式」分节：总开关、主题三档、状态条/回合页脚/动效/完成提示音/输入补全/空输入框上下文推荐/AI 完善提示词、提示音试听、快捷键说明、恢复默认、关于与版本。AI 开关旁明确说明：同一上下文只调用一次并复用缓存，关闭后只用本地模板。 |
 | 数据与存储 | `settings.section` + Host `/dsh-claude-mode/data` | 只读扫描：DSH 主目录（含 profiles/sessions/attachments/runtimes 子项）、Electron userData、更新器缓存、pnpm store/cache、npm cache、当前 TEMP 与系统 TEMP。每条标出 `已托管`（junction）/`仍在 C 盘`/`已在其他盘`/`不存在`，显示物理目标、C/E 盘余量与 `≥` 近似值。输入目标根目录生成迁移 `.ps1`（停 DSH → robocopy → 字节校验 → 原目录改名保留 → 建 junction → 失败回滚）。临时目录另生成 dry-run 清理脚本，只处理旧 `dsh-*`/`dsh_*` 直接子项，默认不删除。 |
+| 外壳去重 | 作用域 CSS + 宿主 DOM 标注 | 宿主把几处控件做了两遍：侧边栏品牌行本身是「新建会话」按钮（与下一行重复）、右侧栏展开/收起复用左侧栏折叠字形（只靠镜像分辨）、每个面板行常驻「取消固定」按钮（「更多」菜单里已有同一开关）、面板只按 `order` 排序（并列时按注册顺序，重启会换位）。四项各一个开关（设置 → Claude 模式 → 外壳去重，默认全开）：品牌行改为纯展示但保留版本号复制、右栏字形改 `rotate(180deg)`、取消固定改为悬停/聚焦显示、并列 `order` 按面板 id 固定并写到 `style.order`。只加 `data-ccm-*` 标注与内联顺序，不改 DOM 结构，关闭或卸载即还原。 |
 | 动效 | 组件级 CSS/JS | 状态星逐帧脉冲、面板入场、开关/分段过渡；遵守 `prefers-reduced-motion` 与「动效」开关（关闭后状态星固定为 `✻`）。 |
 
 ![暗色命令面板](docs/preview/dark-palette.png)
@@ -57,7 +58,7 @@ plugin_manager install_bundle，target = <本仓库的绝对路径>
 - 助手消息操作条上的扬声器：朗读该条回复，再点停止。
 - 标题栏右上角 `✻`：命令面板。
 - 运行状态条的 `Esc 中断`：取消当前回合，保留已完成工具结果与排队消息。
-- 设置 → Claude 模式：全部开关、主题三档、完成提示音试听、恢复默认。
+- 设置 → Claude 模式：全部开关、主题三档、完成提示音试听、恢复默认。其中「外壳去重」四行分别对应品牌行、右栏图标、取消固定按钮与面板图标顺序，可单独关掉回到宿主原样。
 - 设置 → Claude 模式 → 数据与存储：先看审计结果，确认哪些目录已通过 junction 托管、哪些仍直写 C 盘；输入目标根目录生成迁移 `.ps1`，**先退出 DSH** 再在普通 PowerShell 里执行。临时目录不要建 junction，用「生成清理脚本」先 dry-run，再加 `-Apply`。脚本不会自动删除旧数据，迁移后会留下 `*.data-keeper-<时间戳>` 副本供回滚与核对。
 - 主题「跟随系统」会随操作系统亮暗切换（暗→中性炭黑，亮→中性浅灰）。
 
@@ -112,6 +113,7 @@ plugin_manager install_bundle，target = <本仓库的绝对路径>
 - **侧边栏折叠依赖宿主 `layout` 服务**：服务缺席时运行条的 `«` 按钮自动隐藏，面板动作降级为无操作。
 - **整栏滚动依赖宿主侧栏结构**：选择器按宿主 `sidebarCol` 类名片段和内部 `panelList`/`regionArea` 片段生效；宿主若重命名这些内部类，整栏滚动会安静退回原布局，其余功能不受影响。
 - **插件图标折叠依赖宿主的面板固定能力**：DSH 0.2.x 通过 `sidebar.panellist.actions` 暴露面板显示状态与切换回调，插件只在「更多」菜单里增加管理分组；更老的宿主没有该槽位时整个分组静默缺席。宿主内置的「更多」菜单本来不提供图标固定操作，这是该功能的补充而非替换。
+- **外壳去重依赖宿主 DOM 契约**：品牌行识别用 `[data-sidebar-toggle]` + `[data-window-drag]`，右栏用 `[data-sidebar-right-expand]` / `[data-sidebar-right-toggle]`，面板行用「`nav` 内带 `aria-haspopup="menu"` 入口的列表」这一形状；面板顺序读 `sidebar.panellist` 的 registration。宿主若改动这些标记，只有对应那一项安静退回原样，其余功能不受影响。品牌行只让出指针事件，`tabindex` 与 `[data-copy-version]` 都保留；面板顺序只用 `style.order`（`.panelList` 是 flex 列），不移动节点、不改宿主 state。
 - **聊天记录搜索依赖宿主全文索引**：`sessions.search` 只有在部署把 `session-query-sqlite` 的 `openAt` 从 `never` 改为 `first-search`/`startup` 后才返回结果（DSH 默认关闭，Web 侧栏搜索只匹配标题与工作区名）。插件在关闭时安静降级，不假装有结果；首次建索引期间会显示「正在搜索聊天记录…」，最迟 12 秒收起加载态。
 - **朗读依赖浏览器语音合成**：无 `speechSynthesis` 的宿主不显示按钮；音色、语速由操作系统/浏览器决定，插件只选择与界面语言匹配的 voice。切换消息或卸载时会立即取消朗读。
 - **完成提示音默认关闭**：避免在共享环境突然出声；WebAudio 被浏览器策略挂起时静默失败，不影响回合。
@@ -124,7 +126,8 @@ plugin_manager install_bundle，target = <本仓库的绝对路径>
 ```bash
 npm run build:client                   # 由 src/client/*.js 生成 client.js
 npm run check                          # 语法检查 + bundle 是否最新
-npm test                               # 51 个单测（令牌、i18n、设置、排序/分组、动词池、帧序列、活动判定、历史召回、聊天搜索映射、朗读文本/分块、上下文抽取、完整草案/隐藏规则、本地反馈、前缀补全、快捷键表、插件图标管理、设置页与组件渲染、数据审计/迁移/清理计划、侧栏滚动）
+npm test                               # 80 个单测（令牌、i18n、设置、排序/分组、动词池、帧序列、活动判定、历史召回、聊天搜索映射、朗读文本/分块、上下文抽取、完整草案/隐藏规则、本地反馈、前缀补全、快捷键表、插件图标管理、设置页与组件渲染、数据审计/迁移/清理计划、侧栏滚动、外壳去重、构建产物 bundle）
+npm run test:browser                   # 外壳去重真实浏览器夹具 → http://127.0.0.1:55310/shell.html（控制台 await __ACC__.verify()，30 项断言）
 npm run eval:pilot                     # 30 个本地完整草案用例 + 18 项 Host AI 路由合约 + 延迟/上下文预算/网络审计，生成 docs/PROMPT-PILOT-EVAL.md；不调用真实模型
 npm run eval:data                      # 真实文件系统的数据审计 + 迁移/清理计划路由合约；不移动、不删除
 node --check index.js && node --check client.js
@@ -144,16 +147,18 @@ src/client/01-theme.js   两套完整 --dsw-* 令牌包
 src/client/02-state.js   i18n、设置存储、动词/完成词池、状态星帧、调色板通道、格式化、完整提示词草案与前缀补全
 src/client/03-styles.js  作用域化 CSS（.ccm-*）
 src/client/04-components.js  状态条/标题按钮/回合页脚/朗读/完整提示词卡片与 AI 完善/命令面板/设置页
+src/client/045-dedupe.js  外壳去重层（品牌行/右栏图标/取消固定/面板顺序）
 src/client/05-apply.js   主题层与槽位注册（含旧版 chain 槽回退）
 src/client/99-tail.js    bundle 尾
 locale/{zh,en}.json      插件管理器显示元数据
 docs/DESIGN.md           设计说明与交互分层
 docs/VERIFICATION.md     验收记录（环境、矩阵、截图、边界）
+test/browser/            外壳去重的真实浏览器验收夹具（shell.html + harness.js + boot.js + serve.mjs）
 ```
 
 ## 兼容性
 
-- 在 **DSH 0.2.2-rc.3**（Desktop）与 **0.1.2-rc.1**（`dsh web`）验证通过；回合页脚在两种槽位声明下都可注册。
+- 在 **DSH 0.2.2-rc.5**（Desktop）与 **0.1.2-rc.1**（`dsh web`）验证通过；回合页脚在两种槽位声明下都可注册。
 - 依赖的插槽/服务均为官方公开扩展点；宿主若调整槽位名或服务名，插件会降级（对应组件不显示）而不是破坏宿主。
 
 ## 许可

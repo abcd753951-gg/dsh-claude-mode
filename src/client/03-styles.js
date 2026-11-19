@@ -862,6 +862,43 @@ export const STYLES = `
 [class*="sidebarCol"]::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-label-caption, rgba(127, 127, 127, 0.55)); background-clip: padding-box; }
 
 /* ------------------------------------------------------------------ */
+/* Shell de-duplication                                                */
+/* ------------------------------------------------------------------ */
+/* Each rule is inert until 045-dedupe.js raises its html flag, so
+   turning the setting off (or unloading the plugin) restores the Host
+   surface exactly as it was, with no stale paint left behind. */
+/* The brand row stops being a second New Session door; the version copy
+   affordance nested inside it keeps its own pointer target. */
+html[data-ccm-dedupe-brand] [data-ccm-brand-quiet] {
+  cursor: default !important;
+  pointer-events: none !important;
+}
+html[data-ccm-dedupe-brand] [data-ccm-brand-quiet] [data-copy-version] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+/* The right column reads as the opposite edge: the Host mirrors the shared
+   glyph with scaleX(-1), rotating it instead keeps it distinct from the left
+   rail toggle at a glance. */
+html[data-ccm-dedupe-glyphs] [data-sidebar-right-expand] svg,
+html[data-ccm-dedupe-glyphs] [data-sidebar-right-toggle] svg {
+  transform: rotate(180deg) !important;
+}
+/* One pin switch per row: the row's unpin button appears on hover or focus. */
+html[data-ccm-dedupe-unpin] [data-ccm-quiet-unpin] {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+html[data-ccm-dedupe-unpin] [data-ccm-panel-entry]:hover [data-ccm-quiet-unpin],
+html[data-ccm-dedupe-unpin] [data-ccm-quiet-unpin]:focus-visible,
+html[data-ccm-dedupe-unpin] [data-ccm-quiet-unpin]:focus {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-ccm-dedupe-unpin] [data-ccm-quiet-unpin] { transition: none; }
+}
+
+/* ------------------------------------------------------------------ */
 /* Motion                                                              */
 /* ------------------------------------------------------------------ */
 @keyframes ccm-fade-in { from { opacity: 0; } to { opacity: 1; } }

@@ -31,6 +31,7 @@ A pure-slot Claude Code-style interaction layer for DeepSeek Harness: a neutral-
 | Header button | `conversation.session.header.utilities` | Top-right `✻` opens the palette; accented while running. |
 | Settings page | `settings.section` + `settings.section.icon` | Master switch, theme segment, widget/motion/sound toggles, inline completion, empty-composer context suggestions, AI prompt completion, sound preview, shortcut reference, reset, about/version. The AI switch explains that one call per context is cached and that turning it off leaves the local template only. |
 | Data & storage | `settings.section` + Host `/dsh-claude-mode/data` | Read-only scan of the DSH home (profiles/sessions/attachments/runtimes), Electron userData, updater cache, pnpm store/cache, npm cache, current TEMP and system TEMP. Each row shows `Managed` (junction) / `Still on C:` / `On another drive` / `Missing`, the physical target, C/E free space and a `≥` lower-bound size. A target root generates a `.ps1` migration script: stop DSH → robocopy → byte verification → park the original directory → create a junction → rollback on failure. TEMP gets a separate dry-run cleanup script for old `dsh-*`/`dsh_*` direct children. |
+| Shell de-duplication | scoped CSS + Host DOM marks | The Host draws four controls twice: the sidebar brand row is itself a New Session button (the row below does the same), the right column reuses the left rail's collapse glyph (distinguished only by a mirror), every panel row keeps a permanent unpin button (the More menu holds the same switch), and panels sort by `order` alone (ties follow registration order, so they can swap on restart). One switch each under Settings → Claude mode → Shell de-duplication, on by default: the brand row becomes display-only while keeping the version copy, the right glyph rotates 180°, unpin appears on row hover/focus, and ties break by panel id through `style.order`. Only `data-ccm-*` marks and an inline order are written — no node moves — so switching it off or unloading restores the Host surface. |
 | Motion | component CSS/JS | Frame-by-frame star pulse, panel entrance, control transitions; respects `prefers-reduced-motion` and the plugin motion toggle (static `✻` when off). |
 
 ![Dark palette](docs/preview/dark-palette.png)
@@ -58,7 +59,7 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 - The speaker in an assistant action strip reads that reply aloud; click again to stop.
 - Top-right `✻`: command palette.
 - `esc to interrupt` in the run bar: cancel the running turn, keeping finished tool results and queued messages.
-- Settings → Claude mode: switches, theme segment, completion-sound preview, reset.
+- Settings → Claude mode: switches, theme segment, completion-sound preview, reset. The four Shell de-duplication rows cover the brand row, the right-column glyphs, the unpin button and the panel rail order, each switchable on its own.
 - Settings → Claude mode → Data & storage: inspect which locations are already junction-managed and which still write to C:; enter a target root to generate a migration `.ps1`, then **fully stop DSH** and run it in a normal PowerShell. Never junction TEMP; use the cleanup script in dry-run first and add `-Apply` only after reviewing the list. The script parks the original directory as `*.data-keeper-<timestamp>` instead of deleting it.
 - "Follow system" swaps between the neutral charcoal and neutral light packs with the OS scheme.
 
@@ -112,6 +113,7 @@ The directory is also a normal npm package: both `dsh.bundle.patch` and `dsh.cli
 - The `?` gesture only triggers on a focused, empty composer; with text present it stays a normal question mark. `Ctrl+R` (reload) and `Ctrl+S` (save) are not hijacked — prompt search lives inside the `⌃K` palette.
 - The sidebar toggle needs the host `layout` service; without it the run-bar `«` button hides and the palette action degrades to a no-op.
 - Whole-sidebar scrolling depends on the host sidebar structure: selectors match the `sidebarCol` class fragment and its `panelList`/`regionArea` parts. If a host rename removes them, the scroll override quietly falls back to the original layout; the rest of the plugin is unaffected.
+- Shell de-duplication reads host DOM contracts: the brand row via `[data-sidebar-toggle]` plus `[data-window-drag]`, the right column via `[data-sidebar-right-expand]` / `[data-sidebar-right-toggle]`, a panel row as "a `nav` holding an `aria-haspopup="menu"` launcher", and the rail order from `sidebar.panellist` registrations. If one of those markers changes, only that row quietly reverts; everything else keeps working. The brand row only yields pointer events (`tabindex` and `[data-copy-version]` survive), and rail order is applied with `style.order` alone — no node is moved and no host state is touched.
 - Plugin-icon folding needs the host's panel-pin plumbing: DSH 0.2.x exposes panel visibility and callbacks through `sidebar.panellist.actions`, so the plugin only adds a manager section to the More menu. Older hosts without that slot silently omit the section. The built-in More menu does not offer pin controls; this section adds that capability.
 - Chat-history search needs the host full-text index: `sessions.search` only returns rows after a deployment changes `session-query-sqlite`'s `openAt` from `never` to `first-search` or `startup` (DSH ships it disabled and the Web sidebar searches titles/workspaces only). The plugin degrades silently, never fakes results, and shows "Searching chat history…" for at most 12 seconds while the first index build runs.
 - Read-aloud needs browser speech synthesis; without `speechSynthesis` the button is absent. Voice and rate are chosen by the OS/browser; the plugin only prefers a voice matching the UI language. Changing message or unmounting cancels speech.
@@ -133,7 +135,7 @@ node --check index.js && node --check client.js
 
 ## Compatibility
 
-- Verified on **DSH 0.2.2-rc.3** (Desktop) and **0.1.2-rc.1** (`dsh web`); the turn footer registers under both slot declarations.
+- Verified on **DSH 0.2.2-rc.5** (Desktop) and **0.1.2-rc.1** (`dsh web`); the turn footer registers under both slot declarations.
 - Every dependency is a public slot or service. If a host rename happens, the affected widget degrades (disappears) instead of breaking the host.
 
 ## License

@@ -11,7 +11,7 @@
 import { assistantTextForMessage, buildPromptDraft, collectPromptHistory, completionWordFor, format, formatDuration, formatElapsed, hash32, mapPinnedSessions, mapSessionSearchResults, normalizePilotStats, openPalette, openShortcuts, PILOT_STATS_KEY, pickSpinnerVerb, playCompletionChime, promptContextFromChat, recordPilotEvent, runtime, SPINNER_REST_FRAME, spinnerFrame, splitSpeechText, stepPromptHistory, suggestPromptCompletion, suggestionSuppressed, subscribePalette, subscribeShortcuts } from './02-state.js'
 
 /** Rendered plugin version (also shown in the Settings about card). */
-export const VERSION = '1.1.4'
+export const VERSION = '1.2.0'
 
 /** Composer helpers used by the history-recall and shortcut gestures. */
 function activeComposerElement() {
@@ -2564,6 +2564,16 @@ export function createSettingsSection(ctx, store, t) {
           toggle('ghost-context-switch', settings.ghostContext, function (next) { store.set({ ghostContext: next }) }, t('settings.ghostContext.title'))),
         row('ai-prompt', t('settings.aiPrompt.title'), t('settings.aiPrompt.hint'),
           toggle('ai-prompt-switch', settings.aiPrompt, function (next) { store.set({ aiPrompt: next }) }, t('settings.aiPrompt.title'))),
+      ]),
+      React.createElement('div', { key: 'shell', className: 'ccm-settings-group' }, [
+        row('dedupe-brand', t('settings.dedupeBrand.title'), t('settings.dedupeBrand.hint'),
+          toggle('dedupe-brand-switch', settings.dedupeBrand, function (next) { store.set({ dedupeBrand: next }) }, t('settings.dedupeBrand.title'))),
+        row('dedupe-glyphs', t('settings.dedupeGlyphs.title'), t('settings.dedupeGlyphs.hint'),
+          toggle('dedupe-glyphs-switch', settings.dedupeGlyphs, function (next) { store.set({ dedupeGlyphs: next }) }, t('settings.dedupeGlyphs.title'))),
+        row('dedupe-unpin', t('settings.dedupeUnpin.title'), t('settings.dedupeUnpin.hint'),
+          toggle('dedupe-unpin-switch', settings.dedupeUnpin, function (next) { store.set({ dedupeUnpin: next }) }, t('settings.dedupeUnpin.title'))),
+        row('stable-panels', t('settings.stablePanels.title'), t('settings.stablePanels.hint'),
+          toggle('stable-panels-switch', settings.stablePanels, function (next) { store.set({ stablePanels: next }) }, t('settings.stablePanels.title'))),
       ]),
       React.createElement(DataStorageSection, { key: 'data-storage', t: t }),
       React.createElement('div', { key: 'shortcuts', className: 'ccm-settings-group' }, [

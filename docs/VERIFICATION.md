@@ -166,6 +166,122 @@ npm run eval:data
 
 浏览器验证：准备一个 0.2.2-rc.1 的临时 web profile，把 `node_modules/dsh-claude-mode` 链接到本目录，将插件加入 profile bundles，启动 `--no-open --port <port>`，用输出的带 token URL 打开。数据面板不需要模型：直接打开「设置 → Claude 模式 → 数据与存储」即可。AI 路由验证需要一个默认模型；本机用测试 profile 的 mock `llm` 适配器提供固定输出，验证 AI 返回后的 UI 升级、缓存与回退，然后删除 mock 适配器。验证后停止服务并恢复测试 profile。
 
+## 1.2.0 增量验收：外壳去重
+
+- 验收时间：2026-11-20
+- 范围：品牌行、右栏图标、行内取消固定、面板并列 `order` 四项去重（`src/client/045-dedupe.js` + `03-styles.js` 的 `Shell de-duplication` 段 + 设置页「外壳去重」分组）。
+- 命令级：
+
+```text
+npm run build:client   → wrote client.js from 8 source files
+npm run check          → node --check index.js + client.js + bundle freshness: pass
+npm test               → tests 80 / pass 80 / fail 0
+```
+
+- 产物级（`test/unit/bundle.test.mjs`）：在 `node:vm` 里按宿主方式执行**已构建的** `client.js`（`window.__ModuleLoader__.load` + `require('react')`），跑完整个 `apply()`。断言四个 `<html>` 标记落到合成 DOM、品牌行取到 `data-ccm-brand-quiet` 与 `tabindex=-1`、行内取消固定与面板行拿到标记、`style.order` 为 `0/2/1/1000`（并列 24 按 id 拆分、「更多」排尾）、8 个插槽席位全部登记、apply 期间零 `warn`/`error`、逐个 dispose 后宿主表面完全还原。
+- 标记核对：`[data-sidebar-toggle]` 与 `data-window-drag`（`SidebarRoot.tsx` 的 logo 行）、`[data-sidebar-right-expand]`（`ExpandButton.tsx`）、`[data-sidebar-right-toggle]`（`SidebarRight.tsx`）、`.panelList` 的 flex 列（`SidebarRoot.module.css`）、`entriesOfSlot`（`dsh-client-ui-renderer/src/client/registry.ts`）均逐条对照源码确认。
+- 真实浏览器（`test/browser/` 夹具，Playwright Chromium 1280×720，执行**已构建的** `client.js`，样式表 33 454 字符）：`await __ACC__.verify()` → **30/30 PASS**，全部为浏览器自测值（`getComputedStyle` / `elementFromPoint` / `getBoundingClientRect`），不含被测代码常量：
+  - 品牌行 `pointer-events: none`、`tabindex=-1`、`aria-disabled=true`；行心 `elementFromPoint` 由按钮变为容器 `div`；版本号 `pointer-events: auto`，命中仍是 `#copyVersion` —— 复制版本仍可点。
+  - 行内 `style.order` = `插件=0 安全检测=2 设计台=1 更多=1000`，视觉顺序 **插件 → 设计台 → 安全检测 → 更多**；夹具注册顺序故意与 id 顺序相反，因此能区分「按 order 排」与「按名字排」。
+  - 取消固定：默认 `0 0 0`；悬停该行 `1 0 0`；键盘聚焦 `1`、失焦复隐 `0`（`transition: opacity 120ms ease`，`prefers-reduced-motion: reduce` 下为 `none / 0s`）。
+  - 右栏两枚图标 `matrix(-1, 0, 0, -1, 0, 0)`（`rotate(180deg)` 盖掉宿主内联 `scaleX(-1)`），与左栏 `none` 不再相同。
+  - 面板行标记 `["","","",null]`（「更多」不参与）、取消固定标记三行齐备、8 个插槽席位登记、`console.warn`/`error` 计数 0。
+  - `disposeShell()` 后 flags / 标记 / 行内 `order` / `opacity` / 图标变换全部还原，视觉顺序回到宿主顺序。
+
+```text
+flags          {"brand":"","glyphs":"","unpin":"","order":""}
+brand          pe=none tabindex=-1 aria-disabled=true
+copy-version   pe=auto
+hit-test       brand→div  copy→#copyVersion
+rail order     插件 → 设计台 → 安全检测 → 更多
+inline order   插件=0 安全检测=2 设计台=1 更多=1000
+unpin opacity  0 0 1            ← 指针停在第三行（设计台）
+right glyphs   {"leftRail":"none","rightExpand":"matrix(-1, 0, 0, -1, 0, 0)","rightToggle":"matrix(-1, 0, 0, -1, 0, 0)"}
+style element  mounted (33454 chars)
+logs           []
+verdict        PASS (30 checks)
+```
+
+- 截图（同一份夹具，左「去重生效」、右「卸载后＝宿主原样」）：`docs/acceptance-shell-after.png`、`docs/acceptance-shell-before.png`。
+- 仍未覆盖：本机桌面渲染进程以 `dsh-app://` 加载且未开调试端口，外部读不到它的 DOM；夹具是**按宿主源码复刻的最小外壳**（`data-window-drag` / `data-sidebar-toggle` / `data-copy-version` / `data-sidebar-right-*` / `.panelList` 的 flex 列），不是宿主 App 本身。真实窗口的最终确认仍需重载（`Ctrl+R`）；profile 的 `node_modules/dsh-claude-mode` 已是指向本目录的 junction，版本 `1.2.0`。
+- 复现：`npm run test:browser` → 打开 `http://127.0.0.1:55310/shell.html` → 控制台 `await __ACC__.verify()`（详见 `test/browser/README.md`）。
+
+### 夹具自身的两个缺陷（2026-11-17 复现并修复，插件代码未改）
+
+首轮 `verify()` 在 29 项里 3 项失败：
+
+| 编号 | 断言 | 实测 vs 期望 |
+| --- | --- | --- |
+| #11 | 版本号命中测试仍命中自己 | `false != true` |
+| #16 | 取消固定默认隐藏 | `["0","1","0"] != ["0","0","0"]` |
+| #18 | 取消固定失焦复隐 | `"1" != "0"` |
+
+复现命令（首轮夹具：`#report` 放在 `.shell` 内 + `verify()` 用硬编码期望，副本留在 `_tmp/repro/prefix/`）：
+
+```text
+node F:\dsh插件创造\_tmp\repro\prefix\serve.mjs 55312
+→ http://127.0.0.1:55312/shell.html ；先用指针悬停 .panelEntry:nth-child(2)
+→ await __ACC__.verify()  ⇒ 29 项，失败 #11 / #16 / #18
+```
+
+- 根因一（#11）：`.shell` 是 `display:flex; gap:400px`，`#report` 作为第三个 flex 项带来 304px 的 min-content 宽度，把 `.sidebarCol` 从 268px 挤到 **111px**；`.brand` 本身 140px 溢出，而插件对 `[class*="sidebarCol"]` 设了 `overflow-x: hidden`，版本号因此落在列框之外，`elementFromPoint` 命中容器 `DIV.shell`。单变量验证：把 `#report` 移出 `.shell` 后列宽回到 **284px**、命中恢复 `SPAN.copyVersion` —— 插件侧无需任何修改。
+- 根因二（#16/#18）：断言假设指针空闲，而驱动把指针停在某一行，`:hover` 让该行按钮合法显示为 `1`，失焦后指针仍在该行上所以保持 `1`。改为按浏览器上报的 `:hover` / `:focus` 推导期望，聚焦测试改用未被悬停的行。实测：指针停在行上 `["0","1","0"]`、移开 `["0","0","0"]`，两种状态都 30/30。
+- 同一验证复跑（修复后）：`npm run test:browser -- 55310` → `await __ACC__.verify()` → **30/30 PASS**（指针停在行上、移开各一次）；`npm test` → **80/80**；`npm run check` → bundle 与 8 个 client 源文件一致。
+- 结论：#11/#16/#18 全部是夹具缺陷（布局污染 + 断言依赖指针状态），不是插件缺陷；插件代码在这轮复现中未改动一行。
+
+### 真实宿主复核清单（夹具无法覆盖）
+
+夹具用 `elementFromPoint` 与脚本 `.focus()` 近似指针与键盘，测不到真实 Electron 宿主里的窗口拖拽面（`-webkit-app-region: drag`）、原生剪贴板、真实 Tab 序列，以及宿主升级后才出现的层叠规则。以下 5 条必须在窗口里目视确认一遍。
+
+> 编号口径：上文失败记录沿用 29 项版本的历史编号（#16 取消固定默认隐藏、#18 取消固定失焦复隐）；现行夹具为 30 项，对应 #17 / #19。本节同时标注现行编号。
+
+#### 1. 品牌行拖拽区不拦截点击（现行 #10；辅助 #8 / #9）
+
+- 操作：① 在品牌行右侧空白处按住左键拖动后松手；② 单击品牌行文字区；③ 单击版本号 `1.2.0`；④ 从侧边栏顶部连按 6 次 `Tab`。
+- 预期：① 窗口随指针移动；② 不新建会话、会话列表不变；③ 剪贴板得到 `1.2.0`（或出现「已复制」提示），仍不新建会话；④ `Tab` 跳过品牌行，第一站是新建会话行或面板行。
+- 判定：① 窗口移动 = 拖拽面仍然有效；② 会话标题与消息列表不变 = 没有误触；③ 粘贴结果等于设置页显示的插件版本 = 命中；④ 品牌行不出现焦点框 = 没有抢 `Tab`。任一条不符即记失败，附窗口截图。
+- 夹具为何不够：夹具里 `pointer-events: none` 只挡 DOM 命中，Electron 的拖拽面在进入 DOM 命中测试之前就接管了该区域，「拖得动窗口」与「点不出会话」共存只能真机看。
+
+#### 2. 版本号点击命中（现行 #11；辅助 #9）
+
+- 操作：① 悬停版本号看光标；② 单击；③ 点击版本号右边缘外 2px（仍在品牌行内）；④ 关闭「设置 → Claude 模式 → 外壳去重 → 品牌行」后重复 ②。
+- 预期：① 版本号处为手型光标，品牌行其余区域不是手型；② 复制成功、按钮无按下态；③ 无复制也无新建会话；④ 回到宿主行为：品牌行整体就是「新建会话」按钮，点击会新建会话。
+- 判定：② 剪贴板为 `1.2.0` 且无新会话；③ 剪贴板内容不变；④ 出现新会话 = A/B 对照成立，说明开关确实接管了这一处。②③ 同时成立才算通过。
+- 夹具为何不够：夹具只能证明合成点落在 `#copyVersion`，证明不了原生点击链、光标形状与剪贴板写入。
+
+#### 3. 取消固定：默认隐藏、悬停浮现、失焦复隐（现行 #15 / #17 / #18 / #19；历史 #16 / #18）
+
+- 操作：① 指针移入任一面板行（不点）停 300ms 后移出；② `Tab` 到该行「取消固定」按钮，再 `Tab` 走开；③ 悬停后点击该按钮；④ 系统开启「减少动态效果」后重复 ①。
+- 预期：① 按钮约 120ms 淡入、移出淡出；未悬停行不可见也不可点（点击落到行本身，不会误触发取消固定）；② `Tab` 能落到按钮上并使其显现，离开后消失；③ 该插件从面板行移除、出现在「更多」菜单中（取消固定生效）；④ 立即切换，无淡入淡出。
+- 判定：① 出现与消失各一次、无闪烁；点击不可见区域不改变固定状态；② **`Tab` 能到达按钮** —— 若到达不了，说明键盘用户永远看不到该控件，需把显示条件补上 `:focus-within` 并回写测试；③ 以「更多」菜单里的勾选状态为准；④ 无过渡动画。② 不通过时该项整体记失败（可访问性缺口优先于视觉）。
+- 夹具为何不够：`:hover` 由真实指针驱动、`Tab` 序列由真实焦点管理，夹具只能用脚本 `.focus()` 与合成状态近似；这条同时验证「隐藏但可达」这个可访问性前提。
+
+#### 4. 「更多」按钮排尾顺序（现行 #13 / #14 / #28）
+
+- 操作：① 记录当前面板行顺序；② `Ctrl+R` 重载窗口，连续 3 次；③ 在「更多」菜单里固定/取消固定一个插件后再看；④ 关闭再打开 Claude 模式。
+- 预期：① 同一 `order` 的并列项按 id 字典序固定，不同 `order` 按升序；② 三次重载顺序完全一致；③ 新增或移除一行后，其余行相对次序不变；④「更多」始终是最后一行，且不被列表底部裁掉。
+- 判定：②③④ 全部保持 = 稳定；出现两次不同顺序即记失败，附两次截图与「更多」入口位置。注意：宿主若改为虚拟滚动或 grid，`order` 仍生效但行会被重排 DOM，「更多排尾」的假设需重新评估。
+- 夹具为何不够：夹具只有 3 行固定条目，覆盖不到真实宿主的插件数量、重载抖动与滚动容器。
+
+#### 5. `.unpin` 隐藏规则的选择器优先级（现行 #15 / #17 / #29）
+
+- 操作（DevTools 可用时）：① 打开渲染进程控制台；② 不悬停时选中任一取消固定按钮；③ 在 Computed 面板看 `opacity` 的来源规则；④ 关掉「外壳去重 → 取消固定」开关再看来源。
+- 预期：②③ 生效规则是插件的 `html[data-ccm-dedupe-unpin] [data-ccm-quiet-unpin]`（0,2,1，`opacity: 0`），宿主自身的 `.panelEntry` 级规则（0,2,0）被压住；④ 开关关闭后回到宿主规则，按钮常驻。
+- 判定：③ 来源为插件规则 = 优先级成立；若来源是宿主规则或被内联 `opacity` 覆盖，说明宿主升级改了层叠，需把隐藏改为内联 `style.opacity` 或加 `!important`，并补一条回归用例。无 DevTools 时用 A/B 对照：关掉开关按钮常驻、打开后只在悬停/聚焦出现，且**没有任何一行在未悬停时常亮**，即视为通过；出现常亮行即失败。
+- 夹具为何不够：夹具只测自己那份合成 DOM，测不到宿主升级后新增的规则；这条本质是宿主升级的回归哨兵。
+
+#### 复核记录
+
+| # | 复核项 | 结果（通过/失败） | 日期 | 备注 |
+| --- | --- | --- | --- | --- |
+| 1 | 品牌行拖拽区不拦截点击 |  |  |  |
+| 2 | 版本号点击命中 |  |  |  |
+| 3 | 取消固定隐藏 / 浮现 / 复隐 |  |  |  |
+| 4 | 「更多」排尾顺序 |  |  |  |
+| 5 | `.unpin` 规则优先级 |  |  |  |
+
+判定口径：5 条全部「通过」才把 1.2.0 标为「真机已复核」；任一条失败按该条「判定」里的修法处理，并在本文件追加一条回归记录（含编号、截图、复现命令）。
+
 
 
 

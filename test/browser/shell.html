@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>claude-mode 1.2.0 · 外壳去重 · 浏览器验收</title>
+<style>
+  /* ---- Host-shaped baseline -------------------------------------------
+     Mirrors the composed shell the Host publishes: a flex panel rail, a
+     permanent unpin button per row (the duplicate this layer narrows), and
+     mirrored right-column glyphs. The rival `.panelEntry .unpin` rule keeps
+     the unpin button visible on its own, so the layer has to win on
+     specificity rather than on load order. */
+  body { margin: 0; font: 13px/1.45 system-ui, "Segoe UI", sans-serif; color: #1c1d1f; background: #fbfbfa; }
+  .shell { display: flex; align-items: flex-start; gap: 400px; padding: 12px; }
+  .sidebarCol { width: 268px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #f2f2ef; border-radius: 10px; }
+  .logoRow { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 2px; }
+  .brand { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px; border: 0; border-radius: 6px; background: none; font: inherit; color: inherit; cursor: pointer; }
+  .brandMark { font-size: 15px; }
+  .brandName { font-weight: 600; }
+  .copyVersion { padding: 1px 5px; border-radius: 4px; background: #e6e6e1; color: #6b6c70; font-size: 11px; cursor: pointer; }
+  .railToggle, .expand, .collapse { display: inline-grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; }
+  .railToggle:hover { background: #e6e6e1; }
+  .glyph { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+  .newSession { display: flex; align-items: center; justify-content: space-between; padding: 7px 9px; border: 0; border-radius: 7px; background: #fff; font: inherit; color: inherit; cursor: pointer; }
+  .newSession kbd { font: 11px/1 ui-monospace, monospace; color: #8a8b8f; }
+  .panelList { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 0; padding: 0; list-style: none; }
+  .panelEntry { display: flex; align-items: center; gap: 2px; }
+  .panelButton { flex: 1 1 auto; padding: 6px 8px; border: 0; border-radius: 6px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .panelEntry:hover .panelButton { background: #e6e6e1; }
+  /* The duplicate: every row keeps its unpin button on screen. */
+  .panelEntry .unpin { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 5px; background: none; color: #8a8b8f; opacity: 1; cursor: pointer; }
+  .panelMore { display: flex; }
+  .panelMore > button { flex: 1 1 auto; padding: 6px 8px; border: 0; border-radius: 6px; background: none; font: inherit; color: #6b6c70; text-align: left; cursor: pointer; }
+  .rightCol { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #f2f2ef; border-radius: 10px; }
+  .report { max-width: 720px; font: 12px/1.5 ui-monospace, monospace; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="sidebarCol" id="sidebar">
+    <div class="logoRow" data-window-drag>
+      <button class="brand" id="brand" aria-label="新建会话">
+        <span class="brandMark" aria-hidden="true">◈</span>
+        <span class="brandName">DeepSeek Harness</span>
+        <span class="copyVersion" id="copyVersion" data-copy-version="1.2.0">1.2.0</span>
+      </button>
+      <button class="railToggle" id="railToggle" data-sidebar-toggle aria-label="收起侧边栏">
+        <svg class="glyph" viewBox="0 0 16 16"><path d="M10.5 3.5 6 8l4.5 4.5M5 3v10"/></svg>
+      </button>
+    </div>
+    <button class="newSession" id="newSession" aria-label="新建会话"><span>新会话</span><kbd>Ctrl+Alt+N</kbd></button>
+    <nav class="panelList" id="panelList" aria-label="全局面板">
+      <div class="panelEntry">
+        <button class="panelButton" aria-label="插件">插件</button>
+        <button class="unpin" aria-label="取消固定 插件"><svg class="glyph" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="panelEntry">
+        <button class="panelButton" aria-label="安全检测">安全检测</button>
+        <button class="unpin" aria-label="取消固定 安全检测"><svg class="glyph" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="panelEntry">
+        <button class="panelButton" aria-label="设计台">设计台</button>
+        <button class="unpin" aria-label="取消固定 设计台"><svg class="glyph" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="panelMore">
+        <button aria-haspopup="menu" aria-label="更多">更多</button>
+      </div>
+    </nav>
+  </div>
+
+  <div class="rightCol" id="rightCol">
+    <button class="expand" id="rightExpand" data-sidebar-right-expand aria-label="展开右侧栏">
+      <svg class="glyph" style="transform: scaleX(-1)" viewBox="0 0 16 16"><path d="M10.5 3.5 6 8l4.5 4.5M5 3v10"/></svg>
+    </button>
+    <button class="collapse" id="rightToggle" data-sidebar-right-toggle aria-label="收起右侧栏">
+      <svg class="glyph" style="transform: scaleX(-1)" viewBox="0 0 16 16"><path d="M10.5 3.5 6 8l4.5 4.5M5 3v10"/></svg>
+    </button>
+  </div>
+</div>
+
+<pre class="report" id="report">booting…</pre>
+
+<script src="/harness.js"></script>
+<script src="/client.js"></script>
+<script src="/boot.js"></script>
+</body>
+</html>

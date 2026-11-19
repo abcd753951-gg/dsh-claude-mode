@@ -68,8 +68,21 @@ DSH 的默认数据模型是单根：`configured > $DSH_HOME > ~/.dsh`。Windows
 | 完成提示音 | 运行态迁移 + 设置 | 回合结束时可选播放两声轻提示；默认关闭，可试听、可面板开关。 |
 | 新建会话快捷键 | `uiWorkspace.startSession` | `Alt+N` 打开空白会话。 |
 | 回合页脚 | `conversation.chat.turnTail` | 完成后显示完成词与用时，兼容 list 与旧版 chain 槽。 |
-| 设置页 | `settings.section` | 总开关、主题、状态条/页脚/动效/提示音/输入补全/空输入框上下文推荐/AI 完善提示词、试听、快捷键、恢复默认、关于。 |
+| 设置页 | `settings.section` | 总开关、主题、状态条/页脚/动效/提示音/输入补全/空输入框上下文推荐/AI 完善提示词、外壳去重四项、试听、快捷键、恢复默认、关于。 |
 | 数据与存储 | `settings.section` + Host `/dsh-claude-mode/data` | 只读审计 + junction/物理路径/盘余量/`≥` 近似值；生成迁移 `.ps1` 与临时目录 dry-run 清理 `.ps1`；不自动执行、不自动删除。 |
+
+## 外壳去重
+
+宿主在侧边栏与右栏把四处控件画了两遍，插件各给一个开关（默认全开，设置 → Claude 模式 → 外壳去重）：
+
+| 重复 | 宿主证据 | 处置 | 依赖标记 |
+| --- | --- | --- | --- |
+| 品牌行 = 新建会话 | `SidebarRoot.tsx` 品牌按钮与下方新建会话行同用 `t('session.new.label')` 与同一个 `startSession` | 品牌行退为展示：`tabindex=-1` + `pointer-events:none`，版本号 `[data-copy-version]` 单独恢复指针事件，新建会话只剩一个入口 | `[data-sidebar-toggle]` 的 `[data-window-drag]` 祖先行 |
+| 右栏图标 = 左栏折叠图标 | `ExpandButton.tsx` / `SidebarRight.tsx` 复用 `IconPanelLeftOutlineRegular`，宿主只补 `scaleX(-1)` | `rotate(180deg)`：读作对侧边缘，与左侧栏折叠一眼分开 | `[data-sidebar-right-expand]`、`[data-sidebar-right-toggle]` |
+| 行内取消固定 = 「更多」菜单固定开关 | `SidebarRoot.tsx` 的 `panelUnpin` 与 `sidebar.panellist.actions` 的 `setPinned` 是同一个写入口 | 行内按钮改为悬停/聚焦时淡入（`opacity` 过渡），每行只留一个常驻按钮 | `nav` 内带 `aria-haspopup="menu"` 的列表、行内两个按钮的形状 |
+| 面板并列 `order` | 宿主只按 `order` 排序，并列按注册顺序；实测并列组合 24/24、26/26、30/30 | 读 `sidebar.panellist` 注册项，并列按面板 id 二次排序，用 `style.order` 落到 `.panelList`（flex 列），「更多」入口排最后 | `entriesOfSlot` + `.panelList` 的 flex 布局 |
+
+只写 `data-ccm-*` 标记与内联 `order`：不动节点、不碰宿主 state，关闭开关或卸载时逐项还原。`MutationObserver` 跟随宿主重渲染，一帧合并一次。
 
 ## 动效与可访问性
 

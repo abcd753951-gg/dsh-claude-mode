@@ -214,6 +214,12 @@ export function applyClaudeMode(ctx) {
     }
   }, 'dsh-claude-mode: theme layer')
   /* ---------------------------------------------------------------- */
+  /* Shell de-duplication                                             */
+  /* ---------------------------------------------------------------- */
+  ctx.effect(function () {
+    return installDedupe(ctx, store)
+  }, 'dsh-claude-mode: shell de-duplication')
+  /* ---------------------------------------------------------------- */
   /* Command palette actions                                           */
   /* ---------------------------------------------------------------- */
   function buildActions(settings, translate) {
